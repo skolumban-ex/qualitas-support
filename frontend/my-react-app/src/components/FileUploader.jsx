@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import FileDisplay from './FileDisplay';
 
 function FileUploader() {
@@ -20,18 +21,31 @@ function FileUploader() {
       });
       setUploadedFilePath(response.data.filePath);
 
-      // Read the file content (assuming it's a text file for simplicity)
-      const fileReader = new FileReader();
-      fileReader.onload = () => {
-        setFileContent(fileReader.result);
-      };
-      fileReader.readAsText(file);
+      // Check if file is a .txt or .xlsx and read accordingly
+      if (file.type === 'text/plain') {
+        // Handle text files
+        const fileReader = new FileReader();
+        fileReader.onload = () => {
+          setFileContent(fileReader.result);
+        };
+        fileReader.readAsText(file);
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        // Handle .xlsx files
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+
+        // Get the first row as column headers
+        const firstRow = XLSX.utils.sheet_to_json(sheet, { header: 1 })[0];
+        setFileContent(JSON.stringify(firstRow, null, 2)); // Format JSON for display
+      }
     } catch (error) {
       console.error('Error uploading file:', error);
     }
   };
 
-  const { getRootProps, getInputProps } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: '.txt, .xlsx' });
 
   return (
     <div>
@@ -42,7 +56,7 @@ function FileUploader() {
         marginBottom: '20px'
       }}>
         <input {...getInputProps()} />
-        <p>Drag & drop a file here, or click to select a file</p>
+        <p>Drag & drop a file here, or click to select a file (.txt, .xlsx)</p>
       </div>
       {uploadedFilePath && <FileDisplay filePath={uploadedFilePath} fileContent={fileContent} />}
     </div>
