@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.34928.147
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QualitasAPI", "QualitasAPI\QualitasAPI.csproj", "{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ACB1F802-FFBF-45AA-A162-F18C87912CFF}
+	EndGlobalSection
+EndGlobal
