@@ -1,0 +1,46 @@
+/* FileUploader.css */
+
+.file-uploader {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .dropzone {
+    border: 2px dashed #aaa;
+    padding: 20px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .column-selection {
+    margin-top: 20px;
+  }
+  
+  .columns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around; /* Aligns columns */
+    margin-bottom: 20px;
+  }
+  
+  .column {
+    width: calc(33% - 10px); /* Adjusts column width to fit three in a row */
+    margin-bottom: 10px; /* Space between rows */
+  }
+  
+  .action-buttons {
+    display: flex;
+    justify-content: center; /* Align buttons to the left */
+    margin-bottom: 20px;
+
+  }
+  
+  button {
+    margin-right: 10px; /* Space between buttons */
+  }
+  
+  .json-output {
+    margin-top: 20px;
+  }
+  

@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-import FileDisplay from './FileDisplay';
+import Papa from 'papaparse'; // Import the PapaParse library
+import './FileUploader.css'; // Import a CSS file for styles
 
 function FileUploader() {
   const [uploadedFilePath, setUploadedFilePath] = useState(null);
@@ -33,6 +34,16 @@ function FileUploader() {
         // Get the first row as column headers
         const firstRow = XLSX.utils.sheet_to_json(sheet, { header: 1 })[0];
         setColumnNames(firstRow); // Store column names
+      } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        // Handle .csv files using PapaParse
+        Papa.parse(file, {
+          complete: (results) => {
+            // Get the first row as column headers
+            const firstRow = results.data[0];
+            setColumnNames(firstRow); // Store column names
+          },
+          header: false, // Do not treat the first row as headers
+        });
       }
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -49,33 +60,47 @@ function FileUploader() {
     });
   };
 
-  const handleAction = (action) => {
-    setJsonOutput({
+  const handleAction = async (action) => {
+    const jsonPayload = {
       [action]: selectedColumns,
-    });
-    console.log(jsonOutput); // You can see the JSON output in the console
+    };
+  
+    try {
+      const response = await axios.post('http://localhost:7191/api/conversion-templates', jsonPayload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Response from server:', response.data); // Log the response from the server
+    } catch (error) {
+      console.error('Error sending JSON to server:', error);
+    }
+  
+    setJsonOutput(jsonPayload); // Store the JSON output for display
+    console.log(jsonPayload); 
   };
 
-  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: '.xlsx' });
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: '.xlsx, .csv' });
 
   return (
-    <div>
-      <div {...getRootProps()} style={{
-        border: '2px dashed #aaa',
-        padding: '20px',
-        cursor: 'pointer',
-        marginBottom: '20px'
-      }}>
+    <div className="file-uploader">
+      <div {...getRootProps()} className="dropzone">
         <input {...getInputProps()} />
-        <p>Drag & drop an .xlsx file here, or click to select a file</p>
+        <p>Drag & drop an .xlsx or .csv file here, or click to select a file</p>
+      </div>
+      
+      <div className="action-buttons">
+        <button onClick={() => handleAction('merge')}>Merge</button>
+        <button onClick={() => handleAction('delete')}>Delete</button>
+        <button onClick={() => handleAction('Re-ID')}>Re-ID</button>
       </div>
 
       {uploadedFilePath && (
-        <div>
+        <div className="column-selection">
           <h3>Select Columns:</h3>
-          <ul>
+          <div className="columns">
             {columnNames.map((columnName) => (
-              <li key={columnName}>
+              <div className="column" key={columnName}>
                 <label>
                   <input
                     type="checkbox"
@@ -84,20 +109,14 @@ function FileUploader() {
                   />
                   {columnName}
                 </label>
-              </li>
+              </div>
             ))}
-          </ul>
-
-          <div>
-            <button onClick={() => handleAction('merge')}>Merge</button>
-            <button onClick={() => handleAction('delete')}>Delete</button>
-            <button onClick={() => handleAction('Re-ID')}>Re-ID</button>
           </div>
         </div>
       )}
 
       {Object.keys(jsonOutput).length > 0 && (
-        <div>
+        <div className="json-output">
           <h3>JSON Output:</h3>
           <pre>{JSON.stringify(jsonOutput, null, 2)}</pre>
         </div>
