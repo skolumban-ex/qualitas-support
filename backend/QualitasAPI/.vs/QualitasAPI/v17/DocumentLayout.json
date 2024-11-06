@@ -1,0 +1,140 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|d:\\5.felev\\projekt\\backend\\qualitasapi\\qualitasapi\\startup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|solutionrelative:qualitasapi\\startup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|d:\\5.felev\\projekt\\backend\\qualitasapi\\qualitasapi\\local.settings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|solutionrelative:qualitasapi\\local.settings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|d:\\5.felev\\projekt\\backend\\qualitasapi\\qualitasapi\\functions\\gettemplatebyid.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|solutionrelative:qualitasapi\\functions\\gettemplatebyid.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|d:\\5.felev\\projekt\\backend\\qualitasapi\\qualitasapi\\functions\\gettemplates.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|solutionrelative:qualitasapi\\functions\\gettemplates.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|d:\\5.felev\\projekt\\backend\\qualitasapi\\qualitasapi\\functions\\posttemplate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|solutionrelative:qualitasapi\\functions\\posttemplate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|d:\\5.felev\\projekt\\backend\\qualitasapi\\qualitasapi\\qualitasapi.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
+      "RelativeMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|solutionrelative:qualitasapi\\qualitasapi.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|d:\\5.felev\\projekt\\backend\\qualitasapi\\qualitasapi\\model\\template.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}|QualitasAPI\\QualitasAPI.csproj|solutionrelative:qualitasapi\\model\\template.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Startup.cs",
+              "DocumentMoniker": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\Startup.cs",
+              "RelativeDocumentMoniker": "QualitasAPI\\Startup.cs",
+              "ToolTip": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\Startup.cs",
+              "RelativeToolTip": "QualitasAPI\\Startup.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAMAAAANAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-11-06T16:36:57.596Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "local.settings.json",
+              "DocumentMoniker": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\local.settings.json",
+              "RelativeDocumentMoniker": "QualitasAPI\\local.settings.json",
+              "ToolTip": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\local.settings.json",
+              "RelativeToolTip": "QualitasAPI\\local.settings.json",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAoAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2024-10-31T15:42:29.841Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "GetTemplateById.cs",
+              "DocumentMoniker": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\Functions\\GetTemplateById.cs",
+              "RelativeDocumentMoniker": "QualitasAPI\\Functions\\GetTemplateById.cs",
+              "ToolTip": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\Functions\\GetTemplateById.cs",
+              "RelativeToolTip": "QualitasAPI\\Functions\\GetTemplateById.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABIAAAA4AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-31T12:13:53.483Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "PostTemplate.cs",
+              "DocumentMoniker": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\Functions\\PostTemplate.cs",
+              "RelativeDocumentMoniker": "QualitasAPI\\Functions\\PostTemplate.cs",
+              "ToolTip": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\Functions\\PostTemplate.cs",
+              "RelativeToolTip": "QualitasAPI\\Functions\\PostTemplate.cs",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAABYAAAAmAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-31T11:46:04.406Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "GetTemplates.cs",
+              "DocumentMoniker": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\Functions\\GetTemplates.cs",
+              "RelativeDocumentMoniker": "QualitasAPI\\Functions\\GetTemplates.cs",
+              "ToolTip": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\Functions\\GetTemplates.cs",
+              "RelativeToolTip": "QualitasAPI\\Functions\\GetTemplates.cs",
+              "ViewState": "AQIAAAkAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-31T11:40:32.733Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "QualitasAPI",
+              "DocumentMoniker": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\QualitasAPI.csproj",
+              "RelativeDocumentMoniker": "QualitasAPI\\QualitasAPI.csproj",
+              "ToolTip": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\QualitasAPI.csproj",
+              "RelativeToolTip": "QualitasAPI\\QualitasAPI.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-10-31T11:31:45.796Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Template.cs",
+              "DocumentMoniker": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\model\\Template.cs",
+              "RelativeDocumentMoniker": "QualitasAPI\\model\\Template.cs",
+              "ToolTip": "D:\\5.felev\\projekt\\backend\\QualitasAPI\\QualitasAPI\\model\\Template.cs",
+              "RelativeToolTip": "QualitasAPI\\model\\Template.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAArAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-31T11:28:18.849Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
