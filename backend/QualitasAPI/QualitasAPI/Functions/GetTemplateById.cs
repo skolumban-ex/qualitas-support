@@ -8,21 +8,28 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using QualitasAPI.model;
 
 namespace QualitasAPI.Functions
 {
-    public class GetTemplateById
+    public class GetDocumentById
     {
+<<<<<<< HEAD
         private readonly IMongoCollection<BsonDocument> _templateCollection;
+=======
+        private readonly IMongoCollection<BsonDocument> _collection;
+>>>>>>> d6743e7a62d285ad91f38a348bd0bc51ddafb0cd
 
-        public GetTemplateById(IMongoClient mongoClient)
+        public GetDocumentById(IMongoClient mongoClient)
         {
             var database = mongoClient.GetDatabase("SampleDB");
+<<<<<<< HEAD
             _templateCollection = database.GetCollection<BsonDocument>("SampleCollection2");
+=======
+            _collection = database.GetCollection<BsonDocument>("SampleCollection2");
+>>>>>>> d6743e7a62d285ad91f38a348bd0bc51ddafb0cd
         }
 
-        [FunctionName("GetTemplateById")]
+        [FunctionName("GetDocumentById")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "conversion-templates/{templateID}")] HttpRequest req,
             string templateID,
@@ -31,8 +38,23 @@ namespace QualitasAPI.Functions
             try
             {
                 var filter = Builders<BsonDocument>.Filter.Eq("Id", templateID);
+<<<<<<< HEAD
                 var foundTemplate = await _templateCollection.Find(filter).FirstOrDefaultAsync();
                 return foundTemplate != null ? new OkObjectResult(foundTemplate) : new NotFoundResult();
+=======
+                log.LogInformation("Querying MongoDB collection for document with Id: " + templateID);
+
+                var foundDocument = await _collection.Find(filter).FirstOrDefaultAsync();
+
+                if (foundDocument != null)
+                {
+                    return new OkObjectResult(foundDocument);
+                }
+                else
+                {
+                    return new NotFoundResult();
+                }
+>>>>>>> d6743e7a62d285ad91f38a348bd0bc51ddafb0cd
             }
             catch (MongoException ex)
             {
