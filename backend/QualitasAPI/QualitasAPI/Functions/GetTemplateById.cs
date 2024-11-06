@@ -8,21 +8,20 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using QualitasAPI.model;
 
 namespace QualitasAPI.Functions
 {
-    public class GetTemplateById
+    public class GetDocumentById
     {
-        private readonly IMongoCollection<Template> _templateCollection;
+        private readonly IMongoCollection<BsonDocument> _collection;
 
-        public GetTemplateById(IMongoClient mongoClient)
+        public GetDocumentById(IMongoClient mongoClient)
         {
             var database = mongoClient.GetDatabase("SampleDB");
-            _templateCollection = database.GetCollection<Template>("SampleCollection2");
+            _collection = database.GetCollection<BsonDocument>("SampleCollection2");
         }
 
-        [FunctionName("GetTemplateById")]
+        [FunctionName("GetDocumentById")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "conversion-templates/{templateID}")] HttpRequest req,
             string templateID,
@@ -30,9 +29,19 @@ namespace QualitasAPI.Functions
         {
             try
             {
-                var filter = Builders<Template>.Filter.Eq("Id", templateID);
-                var foundTemplate = await _templateCollection.Find(filter).FirstOrDefaultAsync();
-                return foundTemplate != null ? new OkObjectResult(foundTemplate) : new NotFoundResult();
+                var filter = Builders<BsonDocument>.Filter.Eq("Id", templateID);
+                log.LogInformation("Querying MongoDB collection for document with Id: " + templateID);
+
+                var foundDocument = await _collection.Find(filter).FirstOrDefaultAsync();
+
+                if (foundDocument != null)
+                {
+                    return new OkObjectResult(foundDocument);
+                }
+                else
+                {
+                    return new NotFoundResult();
+                }
             }
             catch (MongoException ex)
             {
