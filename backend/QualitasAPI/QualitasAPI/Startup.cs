@@ -13,7 +13,7 @@ namespace QualitasAPI
         {
             builder.Services.AddSingleton<IMongoClient>(s =>
             {
-                string connectionString = Environment.GetEnvironmentVariable(" ");
+                string connectionString = "";
                 return new MongoClient(connectionString);
             });
         }

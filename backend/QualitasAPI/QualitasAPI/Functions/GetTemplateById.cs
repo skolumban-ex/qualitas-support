@@ -19,7 +19,7 @@ namespace QualitasAPI.Functions
         public GetTemplateById(IMongoClient mongoClient)
         {
             var database = mongoClient.GetDatabase("SampleDB");
-            _templateCollection = database.GetCollection<Template>("SampleCollection");
+            _templateCollection = database.GetCollection<Template>("SampleCollection2");
         }
 
         [FunctionName("GetTemplateById")]
@@ -32,7 +32,6 @@ namespace QualitasAPI.Functions
             {
                 var filter = Builders<Template>.Filter.Eq("Id", templateID);
                 var foundTemplate = await _templateCollection.Find(filter).FirstOrDefaultAsync();
-
                 return foundTemplate != null ? new OkObjectResult(foundTemplate) : new NotFoundResult();
             }
             catch (MongoException ex)
