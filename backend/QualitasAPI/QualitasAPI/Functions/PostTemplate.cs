@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System;
 using System.IO;
 using System.Net;
@@ -7,31 +6,49 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
-using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using Newtonsoft.Json;
 using QualitasAPI.model;
 
 namespace QualitasAPI.Functions
 {
-    public static class PostTemplate
+    public class PostTemplate
     {
-        private static List<Template> templates = new List<Template>();
+        private readonly IMongoCollection<BsonDocument> _templateCollection;
+
+        public PostTemplate(IMongoClient mongoClient)
+        {
+            var database = mongoClient.GetDatabase("SampleDB");
+            _templateCollection = database.GetCollection<BsonDocument>("SampleCollection2"); 
+        }
 
         [FunctionName("PostTemplate")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "conversion-templates")] HttpRequest req)
+        public async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "conversion-templates")] HttpRequest req,
+            ILogger log)
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var template = JsonConvert.DeserializeObject<Template>(requestBody);
+            try
+            {
+                // Read and deserialize the incoming request body into a Template object
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var template = JsonConvert.DeserializeObject<Template>(requestBody);
+                var bsonTemplate = template.ToBsonDocument();
+                // Generate a new unique ID for the template
+                template.Id = Guid.NewGuid().ToString();
 
-            template.Id = Guid.NewGuid().ToString();
-            templates.Add(template);
+                // Insert the new template into the MongoDB collection
+                await _templateCollection.InsertOneAsync(bsonTemplate);
 
-            return new OkObjectResult(template);
+                // Return the created template as a response
+                return new OkObjectResult(template);
+            }
+            catch (Exception ex)
+            {
+                log.LogError($"Unexpected error: {ex.Message}");
+                return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
+            }
         }
     }
 }
-
