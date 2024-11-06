@@ -5,7 +5,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -24,6 +27,7 @@ namespace QualitasAPI.Functions
         }
 
         [FunctionName("GetDocumentById")]
+        [OpenApiOperation(operationId: "Run", tags: new[] { "GetDocumentById" })]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "conversion-templates/{templateID}")] HttpRequest req,
             string templateID,
@@ -36,16 +40,6 @@ namespace QualitasAPI.Functions
                 return foundTemplate != null ? new OkObjectResult(foundTemplate) : new NotFoundResult();
                 log.LogInformation("Querying MongoDB collection for document with Id: " + templateID);
 
-                var foundDocument = await _collection.Find(filter).FirstOrDefaultAsync();
-
-                if (foundDocument != null)
-                {
-                    return new OkObjectResult(foundDocument);
-                }
-                else
-                {
-                    return new NotFoundResult();
-                }
             }
             catch (MongoException ex)
             {

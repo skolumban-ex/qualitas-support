@@ -31,12 +31,17 @@ namespace QualitasAPI.Functions
         {
             try
             {
-                // Read and deserialize the incoming request body into a Template object
+               // Read and deserialize the incoming request body into a Template object
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var template = JsonConvert.DeserializeObject<Template>(requestBody);
-                var bsonTemplate = template.ToBsonDocument();
-                // Generate a new unique ID for the template
-                template.Id = Guid.NewGuid().ToString();
+
+
+                var bsonTemplate = new BsonDocument
+                {
+                    { "_id", ObjectId.GenerateNewId() },
+                    { "Id", template.Id },
+                    { "Content", template.Content }
+                };
 
                 // Insert the new template into the MongoDB collection
                 await _templateCollection.InsertOneAsync(bsonTemplate);

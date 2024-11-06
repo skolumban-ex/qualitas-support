@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.34928.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QualitasAPI", "QualitasAPI\QualitasAPI.csproj", "{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QualitasAPI", "QualitasAPI\QualitasAPI.csproj", "{A57DA8DE-B0E4-4C4E-9DE9-090C38A70979}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{09B2FA1D-E400-4165-ABF2-AEAACB8FD0C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A57DA8DE-B0E4-4C4E-9DE9-090C38A70979}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A57DA8DE-B0E4-4C4E-9DE9-090C38A70979}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A57DA8DE-B0E4-4C4E-9DE9-090C38A70979}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A57DA8DE-B0E4-4C4E-9DE9-090C38A70979}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {ACB1F802-FFBF-45AA-A162-F18C87912CFF}
+		SolutionGuid = {3F1BE2D9-A295-4EAA-9CAD-AB87DF7DD4B5}
 	EndGlobalSection
 EndGlobal
