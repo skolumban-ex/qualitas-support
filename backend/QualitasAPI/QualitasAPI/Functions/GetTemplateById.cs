@@ -14,12 +14,12 @@ namespace QualitasAPI.Functions
 {
     public class GetTemplateById
     {
-        private readonly IMongoCollection<Template> _templateCollection;
+        private readonly IMongoCollection<BsonDocument> _templateCollection;
 
         public GetTemplateById(IMongoClient mongoClient)
         {
             var database = mongoClient.GetDatabase("SampleDB");
-            _templateCollection = database.GetCollection<Template>("SampleCollection2");
+            _templateCollection = database.GetCollection<BsonDocument>("SampleCollection2");
         }
 
         [FunctionName("GetTemplateById")]
@@ -30,7 +30,7 @@ namespace QualitasAPI.Functions
         {
             try
             {
-                var filter = Builders<Template>.Filter.Eq("Id", templateID);
+                var filter = Builders<BsonDocument>.Filter.Eq("Id", templateID);
                 var foundTemplate = await _templateCollection.Find(filter).FirstOrDefaultAsync();
                 return foundTemplate != null ? new OkObjectResult(foundTemplate) : new NotFoundResult();
             }
