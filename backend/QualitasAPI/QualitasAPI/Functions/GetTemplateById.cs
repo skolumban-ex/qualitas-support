@@ -13,20 +13,14 @@ namespace QualitasAPI.Functions
 {
     public class GetDocumentById
     {
-<<<<<<< HEAD
         private readonly IMongoCollection<BsonDocument> _templateCollection;
-=======
         private readonly IMongoCollection<BsonDocument> _collection;
->>>>>>> d6743e7a62d285ad91f38a348bd0bc51ddafb0cd
 
         public GetDocumentById(IMongoClient mongoClient)
         {
             var database = mongoClient.GetDatabase("SampleDB");
-<<<<<<< HEAD
             _templateCollection = database.GetCollection<BsonDocument>("SampleCollection2");
-=======
             _collection = database.GetCollection<BsonDocument>("SampleCollection2");
->>>>>>> d6743e7a62d285ad91f38a348bd0bc51ddafb0cd
         }
 
         [FunctionName("GetDocumentById")]
@@ -38,10 +32,8 @@ namespace QualitasAPI.Functions
             try
             {
                 var filter = Builders<BsonDocument>.Filter.Eq("Id", templateID);
-<<<<<<< HEAD
                 var foundTemplate = await _templateCollection.Find(filter).FirstOrDefaultAsync();
                 return foundTemplate != null ? new OkObjectResult(foundTemplate) : new NotFoundResult();
-=======
                 log.LogInformation("Querying MongoDB collection for document with Id: " + templateID);
 
                 var foundDocument = await _collection.Find(filter).FirstOrDefaultAsync();
@@ -54,7 +46,6 @@ namespace QualitasAPI.Functions
                 {
                     return new NotFoundResult();
                 }
->>>>>>> d6743e7a62d285ad91f38a348bd0bc51ddafb0cd
             }
             catch (MongoException ex)
             {
