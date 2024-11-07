@@ -1,0 +1,45 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    padding: 1.5rem;
+    background: #f94367;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+  
+  .navbar a {
+    position: relative;
+    margin: 0 20px;
+    text-decoration: none;
+    color: white; 
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  .navbar a::after {
+    content: '';
+    display: block;
+    width: 0; 
+    height: 0.3vh;
+    background-color: #fa8072; 
+    transition: width 0.3s ease; 
+    position: absolute;
+    bottom: -4px; 
+    left: 0;
+  }
+  
+  .navbar a:hover::after {
+    width: 100%; 
+  }
+  
+  .navbar a.active::after {
+    width: 100%; 
+  }
+  
+  .main-content {
+    padding-top: 60px;
+  }
