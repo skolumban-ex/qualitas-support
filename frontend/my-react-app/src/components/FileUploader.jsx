@@ -82,15 +82,15 @@ function FileUploader() {
           const existingColumn = updatedOutput['encode'].find((col) => col[columnName]);
 
           if (!existingColumn) {
-            const newColumn = {
-              [columnName]: []
-            };
+            const newColumn = { [columnName]: [] };
+            const uniqueOriginals = new Set();
 
             fileData.forEach((row, rowIndex) => {
               const originalValue = row[columnNames.indexOf(columnName)];
               const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
 
-              if (encodedValue) {
+              if (encodedValue && !uniqueOriginals.has(originalValue)) {
+                uniqueOriginals.add(originalValue);
                 newColumn[columnName].push({
                   original: originalValue,
                   encoded: encodedValue,
@@ -100,21 +100,18 @@ function FileUploader() {
 
             updatedOutput['encode'].push(newColumn);
           } else {
+            const uniqueOriginals = new Set(existingColumn[columnName].map((entry) => entry.original));
+
             fileData.forEach((row, rowIndex) => {
               const originalValue = row[columnNames.indexOf(columnName)];
               const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
 
-              if (encodedValue) {
-                const existingEntry = existingColumn[columnName].find((entry) => entry.original === originalValue);
-
-                if (!existingEntry) {
-                  existingColumn[columnName].push({
-                    original: originalValue,
-                    encoded: encodedValue,
-                  });
-                } else {
-                  existingEntry.encoded = encodedValue;
-                }
+              if (encodedValue && !uniqueOriginals.has(originalValue)) {
+                uniqueOriginals.add(originalValue);
+                existingColumn[columnName].push({
+                  original: originalValue,
+                  encoded: encodedValue,
+                });
               }
             });
           }
@@ -150,8 +147,8 @@ function FileUploader() {
   const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: '.xlsx, .csv' });
 
   return (
-    
     <div className="file-uploader">
+
       <div {...getRootProps()} className="dropzone">
         <input {...getInputProps()} />
         <p>Drag & drop an .xlsx or .csv file here, or click to select a file</p>
@@ -202,21 +199,34 @@ function FileUploader() {
           {selectedAction === 'encode' && selectedColumns.length > 0 && (
             <div className="row-display-container">
               <h3>Rows for Encoded Action:</h3>
-              {selectedColumns.map((columnName) => (
-                <div key={columnName} className="column-display">
-                  <h4>{columnName}</h4>
-                  {fileData.map((row, rowIndex) => (
-                    <div key={rowIndex} className="row-item">
-                      <span>{row[columnNames.indexOf(columnName)]}</span>
-                      <input
-                        type="text"
-                        placeholder="Enter encoded value"
-                        onChange={(e) => updateEncodedValue(columnName, rowIndex, e.target.value)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+              {selectedColumns.map((columnName) => {
+                const uniqueOriginals = new Set();
+                return (
+                  <div key={columnName} className="column-display">
+                    <h4>{columnName}</h4>
+                    {fileData
+                      .filter((row) => {
+                        const originalValue = row[columnNames.indexOf(columnName)];
+                        if (uniqueOriginals.has(originalValue)) {
+                          return false;
+                        } else {
+                          uniqueOriginals.add(originalValue);
+                          return true;
+                        }
+                      })
+                      .map((row, rowIndex) => (
+                        <div key={rowIndex} className="row-item">
+                          <span>{row[columnNames.indexOf(columnName)]}</span>
+                          <input
+                            type="text"
+                            placeholder="Enter encoded value"
+                            onChange={(e) => updateEncodedValue(columnName, rowIndex, e.target.value)}
+                          />
+                        </div>
+                      ))}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -261,11 +271,9 @@ function FileUploader() {
               Create Template
             </button>
           </div>
-
         </div>
       )}
     </div>
   );
 }
-
 export default FileUploader;
