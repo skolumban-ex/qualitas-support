@@ -6,7 +6,7 @@
     display: flex;
     justify-content: flex-start;
     padding: 1.5rem;
-    background: #f94367;
+    background-color: #9b2940;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     z-index: 1000;
   }

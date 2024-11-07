@@ -152,8 +152,6 @@ function FileUploader() {
   return (
     
     <div className="file-uploader">
-       <button onClick={openTemplateList}>List Templates</button>
-
       <div {...getRootProps()} className="dropzone">
         <input {...getInputProps()} />
         <p>Drag & drop an .xlsx or .csv file here, or click to select a file</p>
