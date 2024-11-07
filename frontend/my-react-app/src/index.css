@@ -2,13 +2,10 @@
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.6;
   font-weight: 500;
-
   color-scheme: light dark;
   color: #f5f5dc;
-  /* Cream text color */
   background: linear-gradient(135deg, #44444C, #0a1a33);
-  /* Black to navy blue gradient */
-
+  background-attachment: fixed;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -17,14 +14,15 @@
 
 body {
   margin: 0;
+  padding: 10vh;
   display: flex;
   justify-content: center;
   align-items: center;
   min-width: 320px;
   min-height: 100vh;
   background: linear-gradient(135deg, #44444C 0%, #0a1a33 100%);
+  background-attachment: fixed;
   color: #f5f5dc;
-  /* Cream text color */
 }
 
 h1 {
