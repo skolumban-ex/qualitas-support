@@ -15,6 +15,10 @@ function FileUploader() {
   const [selectedAction, setSelectedAction] = useState('none');
   const [temporaryEncodedValues, setTemporaryEncodedValues] = useState({});
 
+  const openTemplateList = () => {
+    window.open('/templates-list', '_blank');
+  };
+
   const onDrop = async (acceptedFiles) => {
     const file = acceptedFiles[0];
     const formData = new FormData();
@@ -146,7 +150,10 @@ function FileUploader() {
   const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: '.xlsx, .csv' });
 
   return (
+    
     <div className="file-uploader">
+       <button onClick={openTemplateList}>List Templates</button>
+
       <div {...getRootProps()} className="dropzone">
         <input {...getInputProps()} />
         <p>Drag & drop an .xlsx or .csv file here, or click to select a file</p>
