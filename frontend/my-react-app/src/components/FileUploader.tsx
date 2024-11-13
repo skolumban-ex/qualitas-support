@@ -41,7 +41,7 @@ const FileUploader: React.FC = () => {
         setFileData(sheet.slice(1));
         setColumnNames(sheet[0] as string[]);
       } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        Papa.parse<string[]>(file, {
+        Papa.parse(file, {
           complete: (results) => {
             const sheet = results.data;
             setFileData(sheet.slice(1));
