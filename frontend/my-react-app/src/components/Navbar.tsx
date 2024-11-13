@@ -1,10 +1,9 @@
-// components/Navbar.jsx
-// eslint-disable-next-line no-unused-vars
+// components/Navbar.tsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import './Navbar.css';
 
-function Navbar() {
+const Navbar: React.FC = () => {
   return (
     <nav className="navbar">
       <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>
@@ -15,6 +14,6 @@ function Navbar() {
       </NavLink>
     </nav>
   );
-}
+};
 
 export default Navbar;

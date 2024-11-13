@@ -1,4 +1,4 @@
-// components/FileUploader.js
+// components/FileUploader.tsx
 import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
@@ -6,41 +6,46 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import './FileUploader.css';
 
-function FileUploader() {
-  const [uploadedFilePath, setUploadedFilePath] = useState(null);
-  const [columnNames, setColumnNames] = useState([]);
-  const [selectedColumns, setSelectedColumns] = useState([]);
-  const [fileData, setFileData] = useState([]);
-  const [jsonOutput, setJsonOutput] = useState({});
-  const [selectedAction, setSelectedAction] = useState('none');
-  const [temporaryEncodedValues, setTemporaryEncodedValues] = useState({});
+interface JSONOutput {
+  ignore?: string[];
+  encode?: Array<{ [key: string]: Array<{ original: string; encoded: string }> }>;
+}
+
+const FileUploader: React.FC = () => {
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [columnNames, setColumnNames] = useState<string[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [fileData, setFileData] = useState<string[][]>([]);
+  const [jsonOutput, setJsonOutput] = useState<JSONOutput>({});
+  const [selectedAction, setSelectedAction] = useState<string>('none');
+  const [temporaryEncodedValues, setTemporaryEncodedValues] = useState<{ [key: string]: string }>({});
 
   const openTemplateList = () => {
     window.open('/templates-list', '_blank');
   };
 
-  const onDrop = async (acceptedFiles) => {
+  const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     const formData = new FormData();
     formData.append('file', file);
 
     try {
       setJsonOutput({});
-      setUploadedFilePath(file.path);
+      setUploadedFileName(file.name);
 
       if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
         const data = await file.arrayBuffer();
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
-        const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+        const sheet = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[sheetName], { header: 1 });
         setFileData(sheet.slice(1));
-        setColumnNames(sheet[0]);
+        setColumnNames(sheet[0] as string[]);
       } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        Papa.parse(file, {
+        Papa.parse<string[]>(file, {
           complete: (results) => {
             const sheet = results.data;
             setFileData(sheet.slice(1));
-            setColumnNames(sheet[0]);
+            setColumnNames(sheet[0] as string[]);
           },
           header: false,
         });
@@ -50,7 +55,7 @@ function FileUploader() {
     }
   };
 
-  const toggleColumnSelection = (columnName) => {
+  const toggleColumnSelection = (columnName: string) => {
     setSelectedColumns((prev) => {
       if (prev.includes(columnName)) {
         return prev.filter((name) => name !== columnName);
@@ -67,22 +72,22 @@ function FileUploader() {
       const updatedOutput = { ...prevOutput };
 
       if (selectedAction === 'ignore') {
-        if (!updatedOutput['ignore']) {
-          updatedOutput['ignore'] = [];
+        if (!updatedOutput.ignore) {
+          updatedOutput.ignore = [];
         }
-        updatedOutput['ignore'] = [...new Set([...updatedOutput['ignore'], ...selectedColumns])];
+        updatedOutput.ignore = [...new Set([...updatedOutput.ignore, ...selectedColumns])];
       }
 
       if (selectedAction === 'encode') {
-        if (!updatedOutput['encode']) {
-          updatedOutput['encode'] = [];
+        if (!updatedOutput.encode) {
+          updatedOutput.encode = [];
         }
 
         selectedColumns.forEach((columnName) => {
-          const existingColumn = updatedOutput['encode'].find((col) => col[columnName]);
+          const existingColumn = updatedOutput.encode?.find((col) => col[columnName]);
 
           if (!existingColumn) {
-            const newColumn = { [columnName]: [] };
+            const newColumn: { [key: string]: Array<{ original: string; encoded: string }> } = { [columnName]: [] };
             const uniqueOriginals = new Set();
 
             fileData.forEach((row, rowIndex) => {
@@ -97,8 +102,10 @@ function FileUploader() {
                 });
               }
             });
-
-            updatedOutput['encode'].push(newColumn);
+            if (!updatedOutput.encode) {
+              updatedOutput.encode = [];
+            }
+            updatedOutput.encode.push(newColumn);
           } else {
             const uniqueOriginals = new Set(existingColumn[columnName].map((entry) => entry.original));
 
@@ -124,7 +131,7 @@ function FileUploader() {
     console.log(jsonOutput);
   };
 
-  const updateEncodedValue = (columnName, rowIndex, newValue) => {
+  const updateEncodedValue = (columnName: string, rowIndex: number, newValue: string) => {
     setTemporaryEncodedValues((prevValues) => ({
       ...prevValues,
       [`${columnName}-${rowIndex}`]: newValue,
@@ -144,17 +151,22 @@ function FileUploader() {
     }
   };
 
-  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: '.xlsx, .csv' });
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'text/csv': ['.csv'],
+    },
+  });
 
   return (
     <div className="file-uploader">
-
       <div {...getRootProps()} className="dropzone">
         <input {...getInputProps()} />
         <p>Drag & drop an .xlsx or .csv file here, or click to select a file</p>
       </div>
 
-      {uploadedFilePath && (
+      {uploadedFileName && (
         <div className="column-selection-container">
           <div className="column-selection">
             <h3>Select Columns:</h3>
@@ -253,27 +265,26 @@ function FileUploader() {
                     const [columnName, rows] = Object.entries(encodedColumn)[0];
                     return (
                       <div key={columnIndex} className="encoded-column">
-                        <div className="column-header"><strong>Column:</strong> {columnName}</div>
-                        <div className="output-rows">
-                          {rows.map((row, rowIndex) => (
-                            <div key={rowIndex} className="output-row">
-                              <strong>Original:</strong> {row.original}, <strong>Encoded:</strong> {row.encoded}
-                            </div>
-                          ))}
-                        </div>
+                        <strong>{columnName}:</strong>
+                        {rows.map((row, rowIndex) => (
+                          <div key={rowIndex}>
+                           {row.original} &gt; {row.encoded}
+
+                          </div>
+                        ))}
                       </div>
                     );
                   })}
                 </div>
               )}
             </div>
-            <button className="create-template-button" onClick={handleCreateTemplate}>
-              Create Template
-            </button>
           </div>
+
+          <button onClick={handleCreateTemplate}>Create Template</button>
         </div>
       )}
     </div>
   );
-}
+};
+
 export default FileUploader;

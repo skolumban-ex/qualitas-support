@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import './TemplateList.css';
 
-function TemplateList() {
-  const [templates, setTemplates] = useState([]);
+interface Template {
+  ignore: string[];
+  encode: { [key: string]: { original: string; encoded: string }[] }[];
+}
+
+const TemplateList: React.FC = () => {
+  const [templates, setTemplates] = useState<Template[]>([]);
 
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
         const response = await fetch('/templates/templateList.json');
-        const fileList = await response.json();
+        const fileList: string[] = await response.json();
 
         const templatesData = await Promise.all(
           fileList.map(async (filename) => {
@@ -45,13 +50,17 @@ function TemplateList() {
                 </div>
                 <h3>Encode:</h3>
                 <div className="ignore-list">
-                  {/*{template.encode.map((item, itemIndex) => (
-                    <span key={itemIndex} className="ignore-item">
-                      {item}
-                    </span>
-                  ))}*/}
-                
-                  
+                  {/* If encode is structured like above, you can render it similarly */}
+                  {/* {template.encode.map((encodedColumn, columnIndex) => (
+                    <div key={columnIndex}>
+                      <strong>Column:</strong> {encodedColumn.columnName}
+                      {encodedColumn.rows.map((row, rowIndex) => (
+                        <div key={rowIndex}>
+                          <strong>Original:</strong> {row.original}, <strong>Encoded:</strong> {row.encoded}
+                        </div>
+                      ))}
+                    </div>
+                  ))} */}
                 </div>
               </div>
             </div>
@@ -62,6 +71,6 @@ function TemplateList() {
       </div>
     </div>
   );
-}
+};
 
 export default TemplateList;
