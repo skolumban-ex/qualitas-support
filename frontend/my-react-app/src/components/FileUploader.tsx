@@ -9,6 +9,7 @@ import './FileUploader.css';
 interface JSONOutput {
   ignore?: string[];
   encode?: Array<{ [key: string]: Array<{ original: string; encoded: string }> }>;
+  merge?: Array<{ mergedColumns: string[]; mergedValues: Array<{ original: string; encoded: string }> }>;
 }
 
 const FileUploader: React.FC = () => {
@@ -65,50 +66,94 @@ const FileUploader: React.FC = () => {
     });
   };
 
+  const updateEncodedValue = (columnName: string, rowIndex: number, newValue: string) => {
+    setTemporaryEncodedValues((prevValues) => ({
+      ...prevValues,
+      [`${columnName}-${rowIndex}`]: newValue,
+    }));
+  };
+
   const handleAction = () => {
     if (selectedAction === 'none' || selectedColumns.length === 0) return;
-  
+
     setJsonOutput((prevOutput) => {
       const updatedOutput: JSONOutput = { ...prevOutput };
-  
+
       if (selectedAction === 'ignore') {
         updatedOutput.ignore = [...(updatedOutput.ignore || []), ...selectedColumns];
       }
-  
+
       if (selectedAction === 'encode') {
         // Ensure updatedOutput.encode is initialized
         if (!updatedOutput.encode) {
           updatedOutput.encode = [];
         }
-  
+
         selectedColumns.forEach((columnName) => {
           let columnEntry = updatedOutput.encode!.find((entry) => entry[columnName]);
-  
+
           if (!columnEntry) {
             columnEntry = { [columnName]: [] };
             updatedOutput.encode!.push(columnEntry);
           }
-  
+
           const existingEncodes = columnEntry[columnName].map((entry) => entry.original);
-  
+
           fileData.forEach((row, rowIndex) => {
             const originalValue = row[columnNames.indexOf(columnName)];
             const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
-  
+
             if (encodedValue && !existingEncodes.includes(originalValue)) {
               columnEntry[columnName].push({ original: originalValue, encoded: encodedValue });
             }
           });
         });
       }
-  
+
+      if (selectedAction === 'merge') {
+        if (!updatedOutput.merge) {
+          updatedOutput.merge = [];
+        }
+
+        const mergedColumnsData: { mergedColumns: string[]; mergedValues: Array<{ original: string; encoded: string }> } = {
+          mergedColumns: [...selectedColumns],
+          mergedValues: [],
+        };
+
+        const uniqueMergedValues = new Set<string>();
+
+        fileData.forEach((row, rowIndex) => {
+          let rowHasEncodedValue = false;
+          selectedColumns.forEach((columnName) => {
+            const originalValue = row[columnNames.indexOf(columnName)];
+            const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
+
+            if (originalValue && encodedValue && encodedValue.trim() !== '') {
+              rowHasEncodedValue = true;
+              if (!uniqueMergedValues.has(originalValue)) {
+                uniqueMergedValues.add(originalValue);
+                mergedColumnsData.mergedValues.push({
+                  original: originalValue,
+                  encoded: encodedValue,
+                });
+              }
+            }
+          });
+        });
+
+        if (mergedColumnsData.mergedValues.length > 0) {
+          updatedOutput.merge.push(mergedColumnsData);
+        }
+      }
+
+      console.log(updatedOutput);
       return updatedOutput;
     });
-  
+
     setColumnNames((prev) => prev.filter((name) => !selectedColumns.includes(name)));
     setSelectedColumns([]);
   };
-  
+
 
   const updateEncodedValue = (columnName: string, rowIndex: number, newValue: string) => {
     setTemporaryEncodedValues((prevValues) => ({
@@ -183,41 +228,72 @@ const FileUploader: React.FC = () => {
               <option value="none" disabled>Select</option>
               <option value="ignore">Ignore</option>
               <option value="encode">Encode</option>
+              <option value="merge">Merge</option>
             </select>
             <button className="action-button" onClick={handleAction}>Add</button>
           </div>
 
-          {selectedAction === 'encode' && selectedColumns.length > 0 && (
+          {(selectedAction === 'encode' || selectedAction === 'merge') && selectedColumns.length > 0 && (
             <div className="row-display-container">
-              <h3>Rows for Encoded Action:</h3>
-              {selectedColumns.map((columnName) => {
-                const uniqueOriginals = new Set();
-                return (
-                  <div key={columnName} className="column-display">
-                    <h4>{columnName}</h4>
-                    {fileData
-                      .filter((row) => {
+              <h3>Rows for {selectedAction.charAt(0).toUpperCase() + selectedAction.slice(1)} Action:</h3>
+              {selectedAction === 'encode' &&
+                selectedColumns.map((columnName) => {
+                  const uniqueOriginals = new Set();
+                  return (
+                    <div key={columnName} className="column-display">
+                      <h4>{columnName}</h4>
+                      {fileData
+                        .filter((row) => {
+                          const originalValue = row[columnNames.indexOf(columnName)];
+                          if (uniqueOriginals.has(originalValue)) {
+                            return false;
+                          } else {
+                            uniqueOriginals.add(originalValue);
+                            return true;
+                          }
+                        })
+                        .map((row, rowIndex) => (
+                          <div key={rowIndex} className="row-item">
+                            <span>{row[columnNames.indexOf(columnName)]}</span>
+                            <input
+                              type="text"
+                              placeholder="Enter encoded value"
+                              onChange={(e) => updateEncodedValue(columnName, rowIndex, e.target.value)}
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  );
+                })}
+
+              {selectedAction === 'merge' && (
+                <div className="column-display">
+                  <h4>Combined Columns: {selectedColumns.join(', ')}</h4>
+                  {(() => {
+                    const combinedUniqueValues = new Set<string>();
+
+                    fileData.forEach((row) => {
+                      selectedColumns.forEach((columnName) => {
                         const originalValue = row[columnNames.indexOf(columnName)];
-                        if (uniqueOriginals.has(originalValue)) {
-                          return false;
-                        } else {
-                          uniqueOriginals.add(originalValue);
-                          return true;
+                        if (originalValue) {
+                          combinedUniqueValues.add(originalValue);
                         }
-                      })
-                      .map((row, rowIndex) => (
-                        <div key={rowIndex} className="row-item">
-                          <span>{row[columnNames.indexOf(columnName)]}</span>
-                          <input
-                            type="text"
-                            placeholder="Enter encoded value"
-                            onChange={(e) => updateEncodedValue(columnName, rowIndex, e.target.value)}
-                          />
-                        </div>
-                      ))}
-                  </div>
-                );
-              })}
+                      });
+                    });
+
+                    return Array.from(combinedUniqueValues).map((value, valueIndex) => (
+                      <div key={valueIndex} className="row-item">
+                        <span>{value}</span>
+                        <input
+                          type="text"
+                          placeholder="Enter encoded value"
+                          onChange={(e) => updateEncodedValue('merged', valueIndex, e.target.value)}
+                        />
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
             </div>
           )}
 
@@ -253,6 +329,30 @@ const FileUploader: React.FC = () => {
                         ))}
                       </div>
                     );
+                  })}
+                </div>
+              )}
+
+              {jsonOutput.merge && jsonOutput.merge.length > 0 && (
+                <div className="output-block">
+                  <div className="output-header"><strong>Merged Columns:</strong></div>
+                  {jsonOutput.merge.map((mergedData, mergeIndex) => {
+                    const filteredRows = mergedData.mergedValues.filter(row => row.encoded.trim() !== '');
+
+                    if (filteredRows.length > 0) {
+                      return (
+                        <div key={mergeIndex} className="merged-column">
+                          <strong>{mergedData.mergedColumns.join(', ')}:</strong>
+                          {filteredRows.map((value, valueIndex) => (
+                            <div key={valueIndex}>
+                              {value.original} &gt; {value.encoded}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    } else {
+                      return null;
+                    }
                   })}
                 </div>
               )}
