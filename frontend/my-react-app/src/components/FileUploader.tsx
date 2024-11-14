@@ -66,13 +66,6 @@ const FileUploader: React.FC = () => {
     });
   };
 
-  const updateEncodedValue = (columnName: string, rowIndex: number, newValue: string) => {
-    setTemporaryEncodedValues((prevValues) => ({
-      ...prevValues,
-      [`${columnName}-${rowIndex}`]: newValue,
-    }));
-  };
-
   const handleAction = () => {
     if (selectedAction === 'none' || selectedColumns.length === 0) return;
 
