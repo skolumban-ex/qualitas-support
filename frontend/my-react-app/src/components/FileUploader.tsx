@@ -66,70 +66,49 @@ const FileUploader: React.FC = () => {
   };
 
   const handleAction = () => {
-    if (selectedAction === 'none') return;
-
+    if (selectedAction === 'none' || selectedColumns.length === 0) return;
+  
     setJsonOutput((prevOutput) => {
-      const updatedOutput = { ...prevOutput };
-
+      const updatedOutput: JSONOutput = { ...prevOutput };
+  
       if (selectedAction === 'ignore') {
-        if (!updatedOutput.ignore) {
-          updatedOutput.ignore = [];
-        }
-        updatedOutput.ignore = [...new Set([...updatedOutput.ignore, ...selectedColumns])];
+        updatedOutput.ignore = [...(updatedOutput.ignore || []), ...selectedColumns];
       }
-
+  
       if (selectedAction === 'encode') {
+        // Ensure updatedOutput.encode is initialized
         if (!updatedOutput.encode) {
           updatedOutput.encode = [];
         }
-
+  
         selectedColumns.forEach((columnName) => {
-          const existingColumn = updatedOutput.encode?.find((col) => col[columnName]);
-
-          if (!existingColumn) {
-            const newColumn: { [key: string]: Array<{ original: string; encoded: string }> } = { [columnName]: [] };
-            const uniqueOriginals = new Set();
-
-            fileData.forEach((row, rowIndex) => {
-              const originalValue = row[columnNames.indexOf(columnName)];
-              const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
-
-              if (encodedValue && !uniqueOriginals.has(originalValue)) {
-                uniqueOriginals.add(originalValue);
-                newColumn[columnName].push({
-                  original: originalValue,
-                  encoded: encodedValue,
-                });
-              }
-            });
-            if (!updatedOutput.encode) {
-              updatedOutput.encode = [];
-            }
-            updatedOutput.encode.push(newColumn);
-          } else {
-            const uniqueOriginals = new Set(existingColumn[columnName].map((entry) => entry.original));
-
-            fileData.forEach((row, rowIndex) => {
-              const originalValue = row[columnNames.indexOf(columnName)];
-              const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
-
-              if (encodedValue && !uniqueOriginals.has(originalValue)) {
-                uniqueOriginals.add(originalValue);
-                existingColumn[columnName].push({
-                  original: originalValue,
-                  encoded: encodedValue,
-                });
-              }
-            });
+          let columnEntry = updatedOutput.encode!.find((entry) => entry[columnName]);
+  
+          if (!columnEntry) {
+            columnEntry = { [columnName]: [] };
+            updatedOutput.encode!.push(columnEntry);
           }
+  
+          const existingEncodes = columnEntry[columnName].map((entry) => entry.original);
+  
+          fileData.forEach((row, rowIndex) => {
+            const originalValue = row[columnNames.indexOf(columnName)];
+            const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
+  
+            if (encodedValue && !existingEncodes.includes(originalValue)) {
+              columnEntry[columnName].push({ original: originalValue, encoded: encodedValue });
+            }
+          });
         });
       }
-
+  
       return updatedOutput;
     });
-
-    console.log(jsonOutput);
+  
+    setColumnNames((prev) => prev.filter((name) => !selectedColumns.includes(name)));
+    setSelectedColumns([]);
   };
+  
 
   const updateEncodedValue = (columnName: string, rowIndex: number, newValue: string) => {
     setTemporaryEncodedValues((prevValues) => ({
@@ -262,14 +241,14 @@ const FileUploader: React.FC = () => {
                 <div className="output-block">
                   <div className="output-header"><strong>Encoded Columns:</strong></div>
                   {jsonOutput.encode.map((encodedColumn, columnIndex) => {
-                    const [columnName, rows] = Object.entries(encodedColumn)[0];
+                    const [columnName] = Object.keys(encodedColumn);
+                    const encodedValues = encodedColumn[columnName];
                     return (
-                      <div key={columnIndex} className="encoded-column">
-                        <strong>{columnName}:</strong>
-                        {rows.map((row, rowIndex) => (
-                          <div key={rowIndex}>
-                           {row.original} &gt; {row.encoded}
-
+                      <div key={columnIndex} className="output-column">
+                        <strong>{columnName}</strong>
+                        {encodedValues.map((value, valueIndex) => (
+                          <div key={valueIndex} className="output-row">
+                            {value.original}: {value.encoded}
                           </div>
                         ))}
                       </div>
@@ -278,9 +257,12 @@ const FileUploader: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
 
-          <button onClick={handleCreateTemplate}>Create Template</button>
+            <div className="action-buttons">
+              <button className="template-button" onClick={openTemplateList}>Templates List</button>
+              <button className="template-button" onClick={handleCreateTemplate}>Create Template</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
