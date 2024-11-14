@@ -147,7 +147,7 @@ const FileUploader: React.FC = () => {
     setSelectedColumns([]);
   };
 
-
+  // New updateEncodedValue function
   const updateEncodedValue = (columnName: string, rowIndex: number, newValue: string) => {
     setTemporaryEncodedValues((prevValues) => ({
       ...prevValues,
