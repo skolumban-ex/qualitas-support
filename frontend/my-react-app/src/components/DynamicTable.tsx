@@ -10,6 +10,7 @@ import {
   TextField,
   Paper,
 } from "@mui/material";
+import './DynamicTable.css';
 
 interface DynamicMultiHeaderTableProps {
   headers: string[][]; // Táblázat fejlécsorai
@@ -67,7 +68,7 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   return (
     <TableContainer component={Paper}>
       {/* Fixed text above the result column */}
-      <div style={{ textAlign: "right", padding: "8px", fontWeight: "bold", marginRight: "120px" }}>
+      <div style={{ textAlign: "right", padding: "8px", fontWeight: "bold",color:"white" ,background:"#9b2940"}}>
         Result column names
       </div>
 
