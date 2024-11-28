@@ -5,6 +5,7 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import './FileUploader.css';
+import DynamicMultiHeaderTable from './DynamicTable';
 
 interface JSONOutput {
   ignore?: string[];
@@ -20,10 +21,60 @@ const FileUploader: React.FC = () => {
   const [jsonOutput, setJsonOutput] = useState<JSONOutput>({});
   const [selectedAction, setSelectedAction] = useState<string>('none');
   const [temporaryEncodedValues, setTemporaryEncodedValues] = useState<{ [key: string]: string }>({});
+  const [uniqueValues, setUniqueValues] = useState<string[][]>([]);
+  const [selectedMultipleColumns, setSelectedMultipleColumns] = useState<string[][]>([]);
+
+  let combinedUniqueValues : string[][];
+
+  const [headers, setHeaders] = useState<string[][]>([]);
+  const [data, setData] = useState<string[][]>([]);
+  const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
+
+  const handleHeaderSelection = (header: string, isSelected: boolean) => {
+    const updatedSelectedHeaders = isSelected
+      ? [...selectedHeaders, header]
+      : selectedHeaders.filter((h) => h !== header);
+
+    setSelectedHeaders(updatedSelectedHeaders);
+
+    const updatedHeaders = [updatedSelectedHeaders];
+    const filteredData = updatedSelectedHeaders.map((header) => {
+      const columnIndex = headers[0].indexOf(header);
+      const uniqueValues = Array.from(
+        new Set(data.map((row) => row[columnIndex]))
+      );
+      return uniqueValues;
+    });
+
+    // Transpose the data to match the table format
+    const transposedData = filteredData[0]?.map((_, i) =>
+      filteredData.map((row) => row[i] || "")
+    ) || [];
+
+    setHeaders(updatedHeaders);
+    setData(transposedData);
+  };
+
+  const addValueToRowEnd = (index: number, value: string) => {
+    setSelectedMultipleColumns((prev) => {
+      // Másoljuk az előző állapotot
+      const updated = [...prev];
+      // Ellenőrizzük, hogy a megadott index létezik-e
+      if (updated[index]) {
+        // Ha létezik, hozzáadjuk az értéket a sor végére
+        updated[index] = [...updated[index], value]; 
+      } else {
+        // Ha nem létezik, új tömbként inicializáljuk az adott indexet
+        updated[index] = [value];
+      }
+      return updated;
+    });
+  };
 
   const openTemplateList = () => {
     window.open('/templates-list', '_blank');
   };
+
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -58,69 +109,98 @@ const FileUploader: React.FC = () => {
 
   const toggleColumnSelection = (columnName: string) => {
     setSelectedColumns((prev) => {
-      if (prev.includes(columnName)) {
-        return prev.filter((name) => name !== columnName);
+      const updatedColumns = prev.includes(columnName)
+        ? prev.filter((name) => name !== columnName)
+        : [...prev, columnName];
+
+        setSelectedMultipleColumns((prev) => {
+          const updatedMultipleColumns = [...prev];
+          updatedMultipleColumns[0] = updatedColumns; // Az első sor frissítése
+          return updatedMultipleColumns;
+        });
+  
+      if (updatedColumns.length > 0 && fileData.length > 0) {
+        // Meghatározzuk a kiválasztott oszlopok indexeit
+        const selectedColumnIndices = updatedColumns.map((col) =>
+          columnNames.indexOf(col)
+        );
+  
+        // A kiválasztott oszlopokból összeállítjuk a megfelelő sorokat
+        const filteredRows = fileData.map((row) =>
+          selectedColumnIndices.map((index) => row[index] || "")
+        );
+  
+        // Egyedi sorokat határozunk meg
+        const uniqueRows = Array.from(
+          new Set(filteredRows.map((row) => JSON.stringify(row)))
+        ).map((row) => JSON.parse(row)); // Visszaalakítjuk az eredeti formátumba
+  
+        setUniqueValues(uniqueRows);
       } else {
-        return [...prev, columnName];
+        setUniqueValues([]); // Ha nincs kiválasztott oszlop, töröljük az értékeket
       }
+  
+      return updatedColumns;
     });
   };
+  
+  
+  
 
   const handleAction = () => {
     if (selectedAction === 'none' || selectedColumns.length === 0) return;
-
+  
     setJsonOutput((prevOutput) => {
       const updatedOutput: JSONOutput = { ...prevOutput };
-
+  
       if (selectedAction === 'ignore') {
         updatedOutput.ignore = [...(updatedOutput.ignore || []), ...selectedColumns];
       }
-
+  
       if (selectedAction === 'encode') {
-        // Ensure updatedOutput.encode is initialized
         if (!updatedOutput.encode) {
           updatedOutput.encode = [];
         }
-
+  
         selectedColumns.forEach((columnName) => {
           let columnEntry = updatedOutput.encode!.find((entry) => entry[columnName]);
-
+  
           if (!columnEntry) {
             columnEntry = { [columnName]: [] };
             updatedOutput.encode!.push(columnEntry);
           }
-
+  
           const existingEncodes = columnEntry[columnName].map((entry) => entry.original);
-
+  
           fileData.forEach((row, rowIndex) => {
             const originalValue = row[columnNames.indexOf(columnName)];
             const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
-
+  
             if (encodedValue && !existingEncodes.includes(originalValue)) {
               columnEntry[columnName].push({ original: originalValue, encoded: encodedValue });
             }
           });
         });
       }
-
+  
       if (selectedAction === 'merge') {
         if (!updatedOutput.merge) {
           updatedOutput.merge = [];
         }
-
+  
         const mergedColumnsData: { mergedColumns: string[]; mergedValues: Array<{ original: string; encoded: string }> } = {
           mergedColumns: [...selectedColumns],
           mergedValues: [],
         };
-
+  
         const uniqueMergedValues = new Set<string>();
-
+  
         fileData.forEach((row, rowIndex) => {
           let rowHasEncodedValue = false;
           selectedColumns.forEach((columnName) => {
             const originalValue = row[columnNames.indexOf(columnName)];
             const encodedValue = temporaryEncodedValues[`${columnName}-${rowIndex}`];
-
+  
             if (originalValue && encodedValue && encodedValue.trim() !== '') {
               rowHasEncodedValue = true;
               if (!uniqueMergedValues.has(originalValue)) {
@@ -133,19 +213,19 @@ const FileUploader: React.FC = () => {
             }
           });
         });
-
+  
         if (mergedColumnsData.mergedValues.length > 0) {
           updatedOutput.merge.push(mergedColumnsData);
         }
       }
-
-      console.log(updatedOutput);
+  
       return updatedOutput;
     });
-
+  
     setColumnNames((prev) => prev.filter((name) => !selectedColumns.includes(name)));
     setSelectedColumns([]);
   };
+  
 
   // New updateEncodedValue function
   const updateEncodedValue = (columnName: string, rowIndex: number, newValue: string) => {
@@ -178,6 +258,9 @@ const FileUploader: React.FC = () => {
 
   return (
     <div className="file-uploader">
+      <div>
+        
+      </div>
       <div {...getRootProps()} className="dropzone">
         <input {...getInputProps()} />
         <p>Drag & drop an .xlsx or .csv file here, or click to select a file</p>
@@ -203,14 +286,15 @@ const FileUploader: React.FC = () => {
                       type="checkbox"
                       checked={selectedColumns.includes(columnName)}
                       onChange={() => toggleColumnSelection(columnName)}
-                    />
+                    ></input>
                     {columnName}
                   </label>
                 </div>
               ))}
             </div>
           </div>
-
+          
+          {/*
           <div className="action-dropdown-container">
             <h3>Select an action:</h3>
             <select
@@ -225,72 +309,20 @@ const FileUploader: React.FC = () => {
             </select>
             <button className="action-button" onClick={handleAction}>Add</button>
           </div>
+          */}         
+          {selectedColumns.length > 0 && (
+          <div className="table-container">
+            <DynamicMultiHeaderTable
+              headers={selectedMultipleColumns}
+              onHeaderChange={setHeaders}
+              data={uniqueValues}
+              onDataChange={setData}
+            />
+          </div>
+        )}
 
-          {(selectedAction === 'encode' || selectedAction === 'merge') && selectedColumns.length > 0 && (
-            <div className="row-display-container">
-              <h3>Rows for {selectedAction.charAt(0).toUpperCase() + selectedAction.slice(1)} Action:</h3>
-              {selectedAction === 'encode' &&
-                selectedColumns.map((columnName) => {
-                  const uniqueOriginals = new Set();
-                  return (
-                    <div key={columnName} className="column-display">
-                      <h4>{columnName}</h4>
-                      {fileData
-                        .filter((row) => {
-                          const originalValue = row[columnNames.indexOf(columnName)];
-                          if (uniqueOriginals.has(originalValue)) {
-                            return false;
-                          } else {
-                            uniqueOriginals.add(originalValue);
-                            return true;
-                          }
-                        })
-                        .map((row, rowIndex) => (
-                          <div key={rowIndex} className="row-item">
-                            <span>{row[columnNames.indexOf(columnName)]}</span>
-                            <input
-                              type="text"
-                              placeholder="Enter encoded value"
-                              onChange={(e) => updateEncodedValue(columnName, rowIndex, e.target.value)}
-                            />
-                          </div>
-                        ))}
-                    </div>
-                  );
-                })}
 
-              {selectedAction === 'merge' && (
-                <div className="column-display">
-                  <h4>Combined Columns: {selectedColumns.join(', ')}</h4>
-                  {(() => {
-                    const combinedUniqueValues = new Set<string>();
-
-                    fileData.forEach((row) => {
-                      selectedColumns.forEach((columnName) => {
-                        const originalValue = row[columnNames.indexOf(columnName)];
-                        if (originalValue) {
-                          combinedUniqueValues.add(originalValue);
-                        }
-                      });
-                    });
-
-                    return Array.from(combinedUniqueValues).map((value, valueIndex) => (
-                      <div key={valueIndex} className="row-item">
-                        <span>{value}</span>
-                        <input
-                          type="text"
-                          placeholder="Enter encoded value"
-                          onChange={(e) => updateEncodedValue('merged', valueIndex, e.target.value)}
-                        />
-                      </div>
-                    ));
-                  })()}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="json-output-container">
+          {/* <div className="json-output-container">
             <h3>Template Preview:</h3>
             <div className="json-output-content">
               {jsonOutput.ignore && jsonOutput.ignore.length > 0 && (
@@ -355,10 +387,11 @@ const FileUploader: React.FC = () => {
               <button className="template-button" onClick={openTemplateList}>Templates List</button>
               <button className="template-button" onClick={handleCreateTemplate}>Create Template</button>
             </div>
-          </div>
+          </div> */}
         </div>
       )}
     </div>
+
   );
 };
 
