@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,66 +9,85 @@ import {
   Button,
   TextField,
   Paper,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import './DynamicTable.css';
 
 interface DynamicMultiHeaderTableProps {
   headers: string[][]; // Táblázat fejlécsorai
   data: string[][]; // Táblázat adatai
-  onHeaderChange: (updatedHeaders: string[][]) => void; // Callback a fejléc változtatásához
-  onDataChange: (updatedData: string[][]) => void; // Callback az adatok változtatásához
+  columnNames: string[]; // Elérhető oszlopnevek
+  selectedColumns: string[]; // Kiválasztott oszlopok
+  onAddColumn: (column: string, rowIndex: number) => void; // Callback az új oszlop hozzáadásához
+  onExportJSON: (json: any) => void; // Callback a JSON exportálásához
 }
 
 const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   headers,
   data,
-  onHeaderChange,
-  onDataChange,
+  columnNames,
+  selectedColumns,
+  onExportJSON,
+  onAddColumn,
 }) => {
-  const addHeaderRow = () => {
-    const newHeaderRow =
-      headers[0]?.map(() => `New Header ${headers.length + 1}`) || [];
-    onHeaderChange([...headers, newHeaderRow]);
-  };
+  const [dropdownVisible, setDropdownVisible] = useState<{[key: number]: boolean}>({});
+  const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
 
-  const removeHeaderRow = () => {
-    if (headers.length > 1) {
-      onHeaderChange(headers.slice(0, -1));
+  const handleColumnSelection = (column: string, rowIndex: number) => {
+    if (!selectedColumns.includes(column)) {
+      // Meghívja a szülő által átadott függvényt a kiválasztott oszlop és sor indexével
+      onAddColumn(column, rowIndex);
+      setDropdownVisible((prev) => ({ ...prev, [rowIndex-1]: !prev[rowIndex-1] }));
     }
   };
 
-  const addColumn = () => {
-    const newHeaders = headers.map((row) => [...row, `New Col ${row.length + 1}`]);
-    const newData = data.map((row) => [...row, ""]);
-    onHeaderChange(newHeaders);
-    onDataChange(newData);
+  const handleInputChange = (rowIndex: number, value: string) => {
+    setInputValues((prev) => ({
+      ...prev,
+      [`${rowIndex}`]: value,
+    }));
   };
 
-  const removeColumn = () => {
-    if (headers[0]?.length > 1) {
-      const newHeaders = headers.map((row) => row.slice(0, -1));
-      const newData = data.map((row) => row.slice(0, -1));
-      onHeaderChange(newHeaders);
-      onDataChange(newData);
-    }
+  const toggleDropdown = (rowIndex: number) => {
+    setDropdownVisible((prev) => ({
+      ...prev,
+      [rowIndex]: !prev[rowIndex],
+    }));
   };
 
-  const updateHeaderCell = (rowIndex: number, colIndex: number, value: string) => {
-    const updatedHeaders = [...headers];
-    updatedHeaders[rowIndex][colIndex] = value;
-    onHeaderChange(updatedHeaders);
-  };
-
-  const updateDataCell = (rowIndex: number, colIndex: number, value: string) => {
-    const updatedData = [...data];
-    updatedData[rowIndex][colIndex] = value;
-    onDataChange(updatedData);
+  const handleExportJSON = () => {
+    const tableData =  {
+      encode: {
+      headers: headers.map((row) =>
+        row.reduce((acc, header, idx) => {
+          acc[`key${idx + 1}`] = header;
+          return acc;
+        }, {})
+      ),
+      pairs: data.map((row, rowIndex) => {
+        // Minden sor egy objektum, amely az oszlopok kulcsait és a hozzájuk tartozó adatokat tartalmazza
+        const result: any = {};
+  
+        // Az oszlopok kulcsainak dinamikus generálása (key1, key2, key3, ...)
+        row.forEach((cell, colIndex) => {
+          const columnKey = `key${colIndex + 1}`; // key1, key2, key3, ...
+          result[columnKey] = cell; // A kulcs az oszlop indexe alapján
+        });
+  
+        // Az input mező értéke vagy az alap adat
+        result.value = inputValues[`${rowIndex}`] || row[row.length - 1]; // Az utolsó cella adatát a value mezőbe
+  
+        return result;
+      }),
+    }};
+    onExportJSON(tableData);
   };
 
   return (
     <TableContainer component={Paper}>
       {/* Fixed text above the result column */}
-      <div style={{ textAlign: "right", padding: "8px", fontWeight: "bold",color:"white" ,background:"#9b2940"}}>
+      <div style={{ textAlign: "right", padding: "8px", fontWeight: "bold", color: "white", background: "#9b2940" }}>
         Result column names
       </div>
 
@@ -77,37 +96,99 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
         <TableHead>
           {headers.map((headerRow, rowIndex) => (
             <TableRow key={rowIndex}>
-              {rowIndex === 0 ? (
-                <TableCell>Column groups to encode</TableCell>
-              ) : (
-                <TableCell>
-                  {rowIndex === headers.length - 1 ? (
+              {/* Az első cella: az első sorban megjelenik a szöveg, és minden sorban a "+" gomb */}
+              <TableCell>
+                {rowIndex === 0 && <div>Column groups to encode</div>}
+                {headers.length === 1 ? (
+                  <>
                     <Button
-                      onClick={() => addHeaderRow()}
+                      onClick={() => toggleDropdown(rowIndex)}
                       variant="text"
                       color="primary"
+                      key={`start-btn-${rowIndex}`}
                     >
                       +
                     </Button>
-                  ) : null}
-                </TableCell>
-              )}
+                    {dropdownVisible[rowIndex] && (
+                      <Select
+                        value=""
+                        onChange={(e) => handleColumnSelection(e.target.value as string, rowIndex + 1)}
+                        displayEmpty
+                        style={{ marginLeft: "10px" }}
+                      >
+                        <MenuItem value="" disabled>
+                          Select column
+                        </MenuItem>
+                        {columnNames.map((name) => (
+                          <MenuItem key={name} value={name}>
+                            {name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    )}
+                  </>
+                ) : rowIndex === headers.length - 1 ? (
+                  <>
+                  <Button
+                      onClick={() => toggleDropdown(rowIndex)}
+                      variant="text"
+                      color="primary"
+                      key={`start-btn-${rowIndex}`}
+                    >
+                      +
+                    </Button>
+                    {dropdownVisible[rowIndex] && (
+                      <Select
+                        value=""
+                        onChange={(e) => handleColumnSelection(e.target.value as string, rowIndex + 1)}
+                        displayEmpty
+                        style={{ marginLeft: "10px" }}
+                      >
+                        <MenuItem value="" disabled>
+                          Select column
+                        </MenuItem>
+                        {columnNames.map((name) => (
+                          <MenuItem key={name} value={name}>
+                            {name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    )}
+                    </>
+                ) : null}
+              </TableCell>
 
               {headerRow.map((col, colIndex) => (
-                <TableCell key={`${rowIndex}-${colIndex}`}>
-                    {col}    
-                </TableCell>
+                <TableCell key={`${rowIndex}-${colIndex}`}>{col}</TableCell>
               ))}
-                <TableCell/>
-              {/* '+' gomb minden fejlécsor végén */}
+
+              {/* '+' gomb az oszlopok bővítéséhez */}
               <TableCell>
                 <Button
-                  onClick={() => addColumn()}
+                  onClick={() => toggleDropdown(rowIndex)}
                   variant="text"
                   color="primary"
+                  key={`end-btn-${rowIndex}`}
                 >
                   +
                 </Button>
+                {dropdownVisible[rowIndex] && (
+                  <Select
+                    value=""
+                    onChange={(e) => handleColumnSelection(e.target.value as string, rowIndex)}
+                    displayEmpty
+                    style={{ marginLeft: "10px" }}
+                  >
+                    <MenuItem value="" disabled>
+                      Select column
+                    </MenuItem>
+                    {columnNames.map((name) => (
+                      <MenuItem key={name} value={name}>
+                        {name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
               </TableCell>
             </TableRow>
           ))}
@@ -123,27 +204,28 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
                 <TableCell />
               )}
 
-            {row.map((cell, colIndex) => (
+              {row.map((cell, colIndex) => (
                 <TableCell key={colIndex}>
                   {cell} {/* Nem szerkeszthető adatcellák */}
                 </TableCell>
               ))}
               <TableCell>
-                <TextField
-                  //value={''} // Az utolsó oszlopba beírt érték
-                  /*onChange={(e) =>
-                    
-                  }*/
+              <TextField
                   variant="outlined"
                   fullWidth
                   size="small"
+                  onChange={(e) =>
+                    handleInputChange(rowIndex, e.target.value)
+                  }
                 />
               </TableCell>
-              
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      <Button onClick={handleExportJSON} color="primary" variant="contained" style={{ marginTop: "20px" }}>
+        Export to JSON
+      </Button>
     </TableContainer>
   );
 };

@@ -24,57 +24,19 @@ const FileUploader: React.FC = () => {
   const [uniqueValues, setUniqueValues] = useState<string[][]>([]);
   const [selectedMultipleColumns, setSelectedMultipleColumns] = useState<string[][]>([]);
 
-  let combinedUniqueValues : string[][];
 
-  const [headers, setHeaders] = useState<string[][]>([]);
-  const [data, setData] = useState<string[][]>([]);
-  const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
-
-  const handleHeaderSelection = (header: string, isSelected: boolean) => {
-    const updatedSelectedHeaders = isSelected
-      ? [...selectedHeaders, header]
-      : selectedHeaders.filter((h) => h !== header);
-
-    setSelectedHeaders(updatedSelectedHeaders);
-
-    const updatedHeaders = [updatedSelectedHeaders];
-    const filteredData = updatedSelectedHeaders.map((header) => {
-      const columnIndex = headers[0].indexOf(header);
-      const uniqueValues = Array.from(
-        new Set(data.map((row) => row[columnIndex]))
-      );
-      return uniqueValues;
-    });
-
-    // Transpose the data to match the table format
-    const transposedData = filteredData[0]?.map((_, i) =>
-      filteredData.map((row) => row[i] || "")
-    ) || [];
-
-    setHeaders(updatedHeaders);
-    setData(transposedData);
+  const handleAddColumn = (column: string, index: number) => {
+    console.log(column)  
+    toggleColumnSelection(column, index)
   };
 
-  const addValueToRowEnd = (index: number, value: string) => {
-    setSelectedMultipleColumns((prev) => {
-      // Másoljuk az előző állapotot
-      const updated = [...prev];
-      // Ellenőrizzük, hogy a megadott index létezik-e
-      if (updated[index]) {
-        // Ha létezik, hozzáadjuk az értéket a sor végére
-        updated[index] = [...updated[index], value]; 
-      } else {
-        // Ha nem létezik, új tömbként inicializáljuk az adott indexet
-        updated[index] = [value];
-      }
-      return updated;
-    });
+  const handleExportJSON = (json: any) => {
+    console.log("Exportált JSON:", JSON.stringify(json, null, 2));
   };
 
   const openTemplateList = () => {
     window.open('/templates-list', '_blank');
   };
-
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -107,28 +69,46 @@ const FileUploader: React.FC = () => {
     }
   };
 
-  const toggleColumnSelection = (columnName: string) => {
-    setSelectedColumns((prev) => {
-      const updatedColumns = prev.includes(columnName)
-        ? prev.filter((name) => name !== columnName)
-        : [...prev, columnName];
+  const toggleColumnSelection = (columnName: string, index: number = 0) => {
+    setSelectedMultipleColumns((prev) => {
+      // Másolat készítése a meglévő állapotról
+      const updatedMultipleColumns = [...prev];
+    
+      // Ellenőrizzük, hogy az adott index már létezik-e
+      if (!updatedMultipleColumns[index]) {
+        updatedMultipleColumns[index] = []; // Ha nincs, inicializáljuk egy üres tömbbel
+      }
+    
+      const row = updatedMultipleColumns[index];
+    
+      if (row.includes(columnName)) {
+        // Ha a columnName már létezik, eltávolítjuk
+        //updatedMultipleColumns[index] = row.filter((col) => col !== columnName);
+        updatedMultipleColumns[index] = [...row];
+      } else {
+        // Ha nem létezik, hozzáadjuk a sor végéhez
+        updatedMultipleColumns[index] = [...row, columnName];
+      }
+      console.log(updatedMultipleColumns)
 
-        setSelectedMultipleColumns((prev) => {
-          const updatedMultipleColumns = [...prev];
-          updatedMultipleColumns[0] = updatedColumns; // Az első sor frissítése
-          return updatedMultipleColumns;
-        });
-  
-      if (updatedColumns.length > 0 && fileData.length > 0) {
+      if (updatedMultipleColumns[0]?.length > 0 && fileData.length > 0) {
         // Meghatározzuk a kiválasztott oszlopok indexeit
-        const selectedColumnIndices = updatedColumns.map((col) =>
-          columnNames.indexOf(col)
-        );
-  
-        // A kiválasztott oszlopokból összeállítjuk a megfelelő sorokat
-        const filteredRows = fileData.map((row) =>
-          selectedColumnIndices.map((index) => row[index] || "")
-        );
+        console.log(selectedMultipleColumns)
+        let filteredRows: (string | number)[][] = []; 
+
+    updatedMultipleColumns.forEach((columns) => {
+      // Az aktuális sor oszlopainak indexei
+      const selectedColumnIndices = columns.map((col) => columnNames.indexOf(col));
+
+      // Az aktuális oszlopok alapján kiszűrjük a megfelelő adatokat
+      const currentFilteredRows = fileData.map((row) =>
+        selectedColumnIndices.map((index) => row[index] || "")
+      );
+
+      // Hozzáfűzzük az eredményeket a filteredRows-hoz
+      filteredRows = filteredRows.concat(currentFilteredRows);
+    });
+
   
         // Egyedi sorokat határozunk meg
         const uniqueRows = Array.from(
@@ -139,7 +119,17 @@ const FileUploader: React.FC = () => {
       } else {
         setUniqueValues([]); // Ha nincs kiválasztott oszlop, töröljük az értékeket
       }
-  
+    
+      return updatedMultipleColumns; // Visszaadjuk a frissített állapotot
+    });
+
+    setSelectedColumns((prev) => {
+      const updatedColumns = prev.includes(columnName)
+        ? prev.filter((name) => name !== columnName)
+        : [...prev, columnName];
+
+      
+      console.log(selectedMultipleColumns)
       return updatedColumns;
     });
   };
@@ -314,9 +304,11 @@ const FileUploader: React.FC = () => {
           <div className="table-container">
             <DynamicMultiHeaderTable
               headers={selectedMultipleColumns}
-              onHeaderChange={setHeaders}
               data={uniqueValues}
-              onDataChange={setData}
+              selectedColumns={selectedColumns}
+              columnNames={columnNames}
+              onAddColumn={handleAddColumn}
+              onExportJSON={handleExportJSON}
             />
           </div>
         )}
