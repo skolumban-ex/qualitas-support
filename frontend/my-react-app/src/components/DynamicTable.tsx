@@ -15,12 +15,12 @@ import {
 import './DynamicTable.css';
 
 interface DynamicMultiHeaderTableProps {
-  headers: string[][]; // Táblázat fejlécsorai
-  data: string[][]; // Táblázat adatai
-  columnNames: string[]; // Elérhető oszlopnevek
-  selectedColumns: string[]; // Kiválasztott oszlopok
-  onAddColumn: (column: string, rowIndex: number) => void; // Callback az új oszlop hozzáadásához
-  onExportJSON: (json: any) => void; // Callback a JSON exportálásához
+  headers: string[][];
+  data: string[][];
+  columnNames: string[];
+  selectedColumns: string[];
+  onAddColumn: (column: string, rowIndex: number) => void;
+  onExportJSON: (json: any) => void;
 }
 
 const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
@@ -31,14 +31,14 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   onExportJSON,
   onAddColumn,
 }) => {
-  const [dropdownVisible, setDropdownVisible] = useState<{[key: number]: boolean}>({});
+  const [dropdownVisible, setDropdownVisible] = useState<{ [key: number]: boolean }>({});
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
+  const [templateName, setTemplateName] = useState<string>("");
 
   const handleColumnSelection = (column: string, rowIndex: number) => {
     if (!selectedColumns.includes(column)) {
-      // Meghívja a szülő által átadott függvényt a kiválasztott oszlop és sor indexével
       onAddColumn(column, rowIndex);
-      setDropdownVisible((prev) => ({ ...prev, [rowIndex-1]: !prev[rowIndex-1] }));
+      setDropdownVisible((prev) => ({ ...prev, [rowIndex - 1]: !prev[rowIndex - 1] }));
     }
   };
 
@@ -57,56 +57,54 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   };
 
   const handleExportJSON = () => {
-    const tableData =  {
+    if (!templateName.trim()) {
+      alert("Please enter a template name before exporting.");
+      return;
+    }
+
+    const tableData = {
       encode: {
-      headers: headers.map((row) =>
-        row.reduce((acc, header, idx) => {
-          acc[`key${idx + 1}`] = header;
-          return acc;
-        }, {})
-      ),
-      pairs: data.map((row, rowIndex) => {
-        // Minden sor egy objektum, amely az oszlopok kulcsait és a hozzájuk tartozó adatokat tartalmazza
-        const result: any = {};
-  
-        // Az oszlopok kulcsainak dinamikus generálása (key1, key2, key3, ...)
-        row.forEach((cell, colIndex) => {
-          const columnKey = `key${colIndex + 1}`; // key1, key2, key3, ...
-          result[columnKey] = cell; // A kulcs az oszlop indexe alapján
-        });
-  
-        // Az input mező értéke vagy az alap adat
-        result.value = inputValues[`${rowIndex}`] || row[row.length - 1]; // Az utolsó cella adatát a value mezőbe
-  
-        return result;
-      }),
-    }};
-    onExportJSON(tableData);
+        headers: headers.map((row) =>
+          row.reduce((acc, header, idx) => {
+            acc[`key${idx + 1}`] = header;
+            return acc;
+          }, {})
+        ),
+        pairs: data.map((row, rowIndex) => {
+          const result: any = {};
+          row.forEach((cell, colIndex) => {
+            const columnKey = `key${colIndex + 1}`;
+            result[columnKey] = cell;
+          });
+          result.value = inputValues[`${rowIndex}`] || row[row.length - 1];
+          return result;
+        }),
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(tableData, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${templateName}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   return (
     <TableContainer component={Paper}>
-      {/* Fixed text above the result column */}
       <div style={{ textAlign: "right", padding: "8px", fontWeight: "bold", color: "white", background: "#9b2940" }}>
         Result column names
       </div>
 
       <Table>
-        {/* Többszintű fejléc */}
         <TableHead>
           {headers.map((headerRow, rowIndex) => (
             <TableRow key={rowIndex}>
-              {/* Az első cella: az első sorban megjelenik a szöveg, és minden sorban a "+" gomb */}
               <TableCell>
                 {rowIndex === 0 && <div>Column groups to encode</div>}
                 {headers.length === 1 ? (
                   <>
-                    <Button
-                      onClick={() => toggleDropdown(rowIndex)}
-                      variant="text"
-                      color="primary"
-                      key={`start-btn-${rowIndex}`}
-                    >
+                    <Button onClick={() => toggleDropdown(rowIndex)} variant="text" color="primary" key={`start-btn-${rowIndex}`}>
                       +
                     </Button>
                     {dropdownVisible[rowIndex] && (
@@ -129,12 +127,7 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
                   </>
                 ) : rowIndex === headers.length - 1 ? (
                   <>
-                  <Button
-                      onClick={() => toggleDropdown(rowIndex)}
-                      variant="text"
-                      color="primary"
-                      key={`start-btn-${rowIndex}`}
-                    >
+                    <Button onClick={() => toggleDropdown(rowIndex)} variant="text" color="primary" key={`start-btn-${rowIndex}`}>
                       +
                     </Button>
                     {dropdownVisible[rowIndex] && (
@@ -154,7 +147,7 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
                         ))}
                       </Select>
                     )}
-                    </>
+                  </>
                 ) : null}
               </TableCell>
 
@@ -162,14 +155,8 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
                 <TableCell key={`${rowIndex}-${colIndex}`}>{col}</TableCell>
               ))}
 
-              {/* '+' gomb az oszlopok bővítéséhez */}
               <TableCell>
-                <Button
-                  onClick={() => toggleDropdown(rowIndex)}
-                  variant="text"
-                  color="primary"
-                  key={`end-btn-${rowIndex}`}
-                >
+                <Button onClick={() => toggleDropdown(rowIndex)} variant="text" color="primary" key={`end-btn-${rowIndex}`}>
                   +
                 </Button>
                 {dropdownVisible[rowIndex] && (
@@ -194,7 +181,6 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
           ))}
         </TableHead>
 
-        {/* Adatok */}
         <TableBody>
           {data.map((row, rowIndex) => (
             <TableRow key={rowIndex}>
@@ -203,26 +189,30 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
               ) : (
                 <TableCell />
               )}
-
               {row.map((cell, colIndex) => (
-                <TableCell key={colIndex}>
-                  {cell} {/* Nem szerkeszthető adatcellák */}
-                </TableCell>
+                <TableCell key={colIndex}>{cell}</TableCell>
               ))}
               <TableCell>
-              <TextField
+                <TextField
                   variant="outlined"
                   fullWidth
                   size="small"
-                  onChange={(e) =>
-                    handleInputChange(rowIndex, e.target.value)
-                  }
+                  onChange={(e) => handleInputChange(rowIndex, e.target.value)}
                 />
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      
+      <TextField
+        label="Template Name"
+        variant="outlined"
+        fullWidth
+        value={templateName}
+        onChange={(e) => setTemplateName(e.target.value)}
+        style={{ marginTop: "20px" }}
+      />
       <Button onClick={handleExportJSON} color="primary" variant="contained" style={{ marginTop: "20px" }}>
         Export to JSON
       </Button>
