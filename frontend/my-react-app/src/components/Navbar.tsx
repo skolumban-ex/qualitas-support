@@ -14,6 +14,9 @@ const Navbar: React.FC = () => {
       <NavLink to="/chart" className={({ isActive }) => (isActive ? 'active' : '')}>
         Chart
       </NavLink>
+      <NavLink to="/statistics" className={({ isActive }) => (isActive ? 'active' : '')}>
+        Statistics
+      </NavLink>
     </nav>
   );
 };

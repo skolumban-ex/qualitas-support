@@ -4,6 +4,7 @@ import FileUploader from './components/FileUploader';
 import TemplateList from './components/TemplateList';
 import ChartPage from './components/ChartPage';
 import Navbar from './components/Navbar';
+import StatisticsPage from './components/StatisticsPage';
 
 const App: React.FC = () => {
   return (
@@ -24,6 +25,7 @@ const Main: React.FC = () => {
         <Route path="/" element={<FileUploader />} />
         <Route path="/templates-list" element={<TemplateList />} />
         <Route path="/chart" element={<ChartPage />} />
+        <Route path="/statistics" element={<StatisticsPage />} />
       </Routes>
     </div>
   );
