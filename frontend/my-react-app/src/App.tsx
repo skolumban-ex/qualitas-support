@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import FileUploader from './components/FileUploader';
 import TemplateList from './components/TemplateList';
+import ChartPage from './components/ChartPage';
 import Navbar from './components/Navbar';
 
 const App: React.FC = () => {
@@ -22,6 +23,7 @@ const Main: React.FC = () => {
       <Routes>
         <Route path="/" element={<FileUploader />} />
         <Route path="/templates-list" element={<TemplateList />} />
+        <Route path="/chart" element={<ChartPage />} />
       </Routes>
     </div>
   );

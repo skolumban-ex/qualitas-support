@@ -1,4 +1,3 @@
-// components/Navbar.tsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import './Navbar.css';
@@ -11,6 +10,9 @@ const Navbar: React.FC = () => {
       </NavLink>
       <NavLink to="/templates-list" className={({ isActive }) => (isActive ? 'active' : '')}>
         Template List
+      </NavLink>
+      <NavLink to="/chart" className={({ isActive }) => (isActive ? 'active' : '')}>
+        Chart
       </NavLink>
     </nav>
   );
