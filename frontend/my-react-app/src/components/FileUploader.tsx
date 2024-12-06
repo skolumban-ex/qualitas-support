@@ -1,4 +1,3 @@
-// components/FileUploader.tsx
 import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
@@ -32,6 +31,7 @@ const FileUploader: React.FC = () => {
 
   const handleExportJSON = (json: any) => {
     console.log("Exportált JSON:", JSON.stringify(json, null, 2));
+    setJsonOutput(json);
   };
 
   const openTemplateList = () => {
@@ -216,8 +216,6 @@ const FileUploader: React.FC = () => {
     setSelectedColumns([]);
   };
   
-
-  // New updateEncodedValue function
   const updateEncodedValue = (columnName: string, rowIndex: number, newValue: string) => {
     setTemporaryEncodedValues((prevValues) => ({
       ...prevValues,
@@ -248,14 +246,11 @@ const FileUploader: React.FC = () => {
 
   return (
     <div className="file-uploader">
-      <div>
-        
-      </div>
       <div {...getRootProps()} className="dropzone">
         <input {...getInputProps()} />
         <p>Drag & drop an .xlsx or .csv file here, or click to select a file</p>
       </div>
-
+  
       {uploadedFileName && (
         <div className="column-selection-container">
           <div className="column-selection">
@@ -283,108 +278,29 @@ const FileUploader: React.FC = () => {
               ))}
             </div>
           </div>
-          
-          {/*
-          <div className="action-dropdown-container">
-            <h3>Select an action:</h3>
-            <select
-              className="action-dropdown"
-              value={selectedAction}
-              onChange={(e) => setSelectedAction(e.target.value)}
-            >
-              <option value="none" disabled>Select</option>
-              <option value="ignore">Ignore</option>
-              <option value="encode">Encode</option>
-              <option value="merge">Merge</option>
-            </select>
-            <button className="action-button" onClick={handleAction}>Add</button>
-          </div>
-          */}         
+  
           {selectedColumns.length > 0 && (
-          <div className="table-container">
-            <DynamicMultiHeaderTable
-              headers={selectedMultipleColumns}
-              data={uniqueValues}
-              selectedColumns={selectedColumns}
-              columnNames={columnNames}
-              onAddColumn={handleAddColumn}
-              onExportJSON={handleExportJSON}
-            />
-          </div>
-        )}
-
-
-          {/* <div className="json-output-container">
-            <h3>Template Preview:</h3>
-            <div className="json-output-content">
-              {jsonOutput.ignore && jsonOutput.ignore.length > 0 && (
-                <div className="output-block">
-                  <div className="output-header"><strong>Ignored Columns:</strong></div>
-                  <div className="output-rows">
-                    {jsonOutput.ignore.map((columnName, index) => (
-                      <div key={index} className="output-row">
-                        {columnName}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {jsonOutput.encode && jsonOutput.encode.length > 0 && (
-                <div className="output-block">
-                  <div className="output-header"><strong>Encoded Columns:</strong></div>
-                  {jsonOutput.encode.map((encodedColumn, columnIndex) => {
-                    const [columnName] = Object.keys(encodedColumn);
-                    const encodedValues = encodedColumn[columnName];
-                    return (
-                      <div key={columnIndex} className="output-column">
-                        <strong>{columnName}</strong>
-                        {encodedValues.map((value, valueIndex) => (
-                          <div key={valueIndex} className="output-row">
-                            {value.original}: {value.encoded}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {jsonOutput.merge && jsonOutput.merge.length > 0 && (
-                <div className="output-block">
-                  <div className="output-header"><strong>Merged Columns:</strong></div>
-                  {jsonOutput.merge.map((mergedData, mergeIndex) => {
-                    const filteredRows = mergedData.mergedValues.filter(row => row.encoded.trim() !== '');
-
-                    if (filteredRows.length > 0) {
-                      return (
-                        <div key={mergeIndex} className="merged-column">
-                          <strong>{mergedData.mergedColumns.join(', ')}:</strong>
-                          {filteredRows.map((value, valueIndex) => (
-                            <div key={valueIndex}>
-                              {value.original} &gt; {value.encoded}
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    } else {
-                      return null;
-                    }
-                  })}
-                </div>
-              )}
+            <div className="table-container">
+              <DynamicMultiHeaderTable
+                headers={selectedMultipleColumns}
+                data={uniqueValues}
+                selectedColumns={selectedColumns}
+                columnNames={columnNames}
+                onAddColumn={handleAddColumn}
+                onExportJSON={handleExportJSON}
+              />
             </div>
-
-            <div className="action-buttons">
-              <button className="template-button" onClick={openTemplateList}>Templates List</button>
-              <button className="template-button" onClick={handleCreateTemplate}>Create Template</button>
-            </div>
-          </div> */}
+          )}
         </div>
       )}
+  
+      <div className="json-output-container">
+        <h3>JSON Output:</h3>
+        <pre className="formatted-json">{JSON.stringify(jsonOutput, null, 2)}</pre>
+      </div>
     </div>
-
   );
+  
 };
 
 export default FileUploader;
