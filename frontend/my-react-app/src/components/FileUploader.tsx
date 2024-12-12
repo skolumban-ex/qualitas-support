@@ -5,6 +5,8 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import './FileUploader.css';
 import DynamicMultiHeaderTable from './DynamicTable';
+import TemplateViewer from './TemplateViewer';
+import TableEdit from './TableEdit';
 
 interface JSONOutput {
   ignore?: string[];
@@ -22,16 +24,62 @@ const FileUploader: React.FC = () => {
   const [temporaryEncodedValues, setTemporaryEncodedValues] = useState<{ [key: string]: string }>({});
   const [uniqueValues, setUniqueValues] = useState<string[][]>([]);
   const [selectedMultipleColumns, setSelectedMultipleColumns] = useState<string[][]>([]);
+  const [template, setTemplate] = useState<string[]>([]);
+  const [values, setValues] = useState<string[]>([]);
+  const [tableEditEnabled, setTableEditEnabled] = useState<boolean>(false);
 
-
-  const handleAddColumn = (column: string, index: number) => {
+  const handleAddColumn = (column: string, index: number, columnIndex: number) => {
     console.log(column)  
-    toggleColumnSelection(column, index)
+    toggleColumnSelection(column, index, columnIndex)
   };
 
   const handleExportJSON = (json: any) => {
     console.log("Exportált JSON:", JSON.stringify(json, null, 2));
-    setJsonOutput(json);
+    
+    setTemplate((prevTemplate) => {
+      const updatedTemplate = [...prevTemplate];
+      let isUpdated = false;
+
+      for (let i = 0; i < updatedTemplate.length; i++) {
+        const existingTemplate = JSON.parse(updatedTemplate[i]);
+        if (JSON.stringify(existingTemplate.encode.headers) === JSON.stringify(json.encode.headers)) {
+          updatedTemplate[i] = JSON.stringify(json, null, 2);
+          isUpdated = true;
+          break;
+        }
+      }
+
+      if (!isUpdated) {
+        updatedTemplate.push(JSON.stringify(json, null, 2));
+      }
+
+      return updatedTemplate;
+    });
+
+    console.log(template);
+
+    setTableEditEnabled(false);
+
+    setSelectedMultipleColumns([]);
+    setUniqueValues([]);
+    setSelectedColumns([]);
+  };
+
+  const handleTemplateClick = (template) => {
+    console.log('Selected template:', template);
+    // Add further processing logic here as needed
+    const restoredHeaders = template.encode.headers.map((row) => row.keys);
+    setSelectedMultipleColumns(restoredHeaders);
+    console.log(restoredHeaders);
+    const restoredData = template.encode.pairs.map((pair) => pair.keyvalues);
+    setUniqueValues(restoredData);
+    console.log(restoredData);
+// Létrehozzuk a "value" értékek új változóját:
+    const valueValues = template.encode.pairs.map((pair) => pair.value);
+    setValues(valueValues);
+    console.log(valueValues);
+    setTableEditEnabled(true);
+
   };
 
   const openTemplateList = () => {
@@ -69,58 +117,49 @@ const FileUploader: React.FC = () => {
     }
   };
 
-  const toggleColumnSelection = (columnName: string, index: number = 0) => {
+  const toggleColumnSelection = (columnName: string, index: number = 0, columnIndex: number=NaN) => {
     setSelectedMultipleColumns((prev) => {
-      // Másolat készítése a meglévő állapotról
       const updatedMultipleColumns = [...prev];
     
-      // Ellenőrizzük, hogy az adott index már létezik-e
       if (!updatedMultipleColumns[index]) {
-        updatedMultipleColumns[index] = []; // Ha nincs, inicializáljuk egy üres tömbbel
+        updatedMultipleColumns[index] = [];
       }
     
       const row = updatedMultipleColumns[index];
     
-      if (row.includes(columnName)) {
-        // Ha a columnName már létezik, eltávolítjuk
-        //updatedMultipleColumns[index] = row.filter((col) => col !== columnName);
-        updatedMultipleColumns[index] = [...row];
+      if (!row.includes(columnName) || columnName === "waiting") {
+        if (!isNaN(columnIndex)) {
+          updatedMultipleColumns[index][columnIndex] = columnName;
+        } else {
+          updatedMultipleColumns[index] = [...row, columnName];
+        }
       } else {
-        // Ha nem létezik, hozzáadjuk a sor végéhez
-        updatedMultipleColumns[index] = [...row, columnName];
+        updatedMultipleColumns[index] = [...row];
       }
-      console.log(updatedMultipleColumns)
+
+      console.log(updatedMultipleColumns);
 
       if (updatedMultipleColumns[0]?.length > 0 && fileData.length > 0) {
-        // Meghatározzuk a kiválasztott oszlopok indexeit
-        console.log(selectedMultipleColumns)
         let filteredRows: (string | number)[][] = []; 
 
-    updatedMultipleColumns.forEach((columns) => {
-      // Az aktuális sor oszlopainak indexei
-      const selectedColumnIndices = columns.map((col) => columnNames.indexOf(col));
+        updatedMultipleColumns.forEach((columns) => {
+          const selectedColumnIndices = columns.map((col) => columnNames.indexOf(col));
+          const currentFilteredRows = fileData.map((row) =>
+            selectedColumnIndices.map((index) => row[index] || "")
+          );
+          filteredRows = filteredRows.concat(currentFilteredRows);
+        });
 
-      // Az aktuális oszlopok alapján kiszűrjük a megfelelő adatokat
-      const currentFilteredRows = fileData.map((row) =>
-        selectedColumnIndices.map((index) => row[index] || "")
-      );
-
-      // Hozzáfűzzük az eredményeket a filteredRows-hoz
-      filteredRows = filteredRows.concat(currentFilteredRows);
-    });
-
-  
-        // Egyedi sorokat határozunk meg
         const uniqueRows = Array.from(
           new Set(filteredRows.map((row) => JSON.stringify(row)))
-        ).map((row) => JSON.parse(row)); // Visszaalakítjuk az eredeti formátumba
-  
+        ).map((row) => JSON.parse(row));
+
         setUniqueValues(uniqueRows);
       } else {
-        setUniqueValues([]); // Ha nincs kiválasztott oszlop, töröljük az értékeket
+        setUniqueValues([]);
       }
     
-      return updatedMultipleColumns; // Visszaadjuk a frissített állapotot
+      return updatedMultipleColumns;
     });
 
     setSelectedColumns((prev) => {
@@ -128,8 +167,7 @@ const FileUploader: React.FC = () => {
         ? prev.filter((name) => name !== columnName)
         : [...prev, columnName];
 
-      
-      console.log(selectedMultipleColumns)
+      console.log(selectedMultipleColumns);
       return updatedColumns;
     });
   };
@@ -293,11 +331,18 @@ const FileUploader: React.FC = () => {
           )}
         </div>
       )}
-  
-      <div className="json-output-container">
-        <h3>JSON Output:</h3>
-        <pre className="formatted-json">{JSON.stringify(jsonOutput, null, 2)}</pre>
-      </div>
+      <TemplateViewer 
+        templates={template}
+        onTemplateClick={handleTemplateClick}  />
+      {tableEditEnabled &&(
+      <TableEdit
+        headers={selectedMultipleColumns}
+        data={uniqueValues}
+        values={values}
+        onExportJSON={handleExportJSON}
+        onSetValues={setValues}
+      />
+      )}
     </div>
   );
   

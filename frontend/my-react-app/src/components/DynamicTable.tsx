@@ -19,7 +19,7 @@ interface DynamicMultiHeaderTableProps {
   data: string[][]; // Táblázat adatai
   columnNames: string[]; // Elérhető oszlopnevek
   selectedColumns: string[]; // Kiválasztott oszlopok
-  onAddColumn: (column: string, rowIndex: number) => void; // Callback az új oszlop hozzáadásához
+  onAddColumn: (column: string, rowIndex: number, columnIndex: number) => void; // Callback az új oszlop hozzáadásához
   onExportJSON: (json: any) => void; // Callback a JSON exportálásához
 }
 
@@ -34,12 +34,26 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   const [dropdownVisible, setDropdownVisible] = useState<{[key: number]: boolean}>({});
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
 
-  const handleColumnSelection = (column: string, rowIndex: number) => {
-    if (!selectedColumns.includes(column)) {
-      // Meghívja a szülő által átadott függvényt a kiválasztott oszlop és sor indexével
-      onAddColumn(column, rowIndex);
-      setDropdownVisible((prev) => ({ ...prev, [rowIndex-1]: !prev[rowIndex-1] }));
+
+  const handleColumnSelection = (column: string, rowIndex: number, n: number=1, columnIndex : number=NaN, columnAdd: boolean=false) => {
+    if(columnAdd){
+      for (let i = 0; i < n; i++){
+        if (!selectedColumns.includes(column) || column === "waiting") {
+          // Meghívja a szülő által átadott függvényt a kiválasztott oszlop és sor indexével
+          onAddColumn(column, i, columnIndex);
+         
+        }
+      }
     }
+    else{
+      for (let i = 0; i < n; i++){
+        if (!selectedColumns.includes(column) || column === "waiting") {
+          // Meghívja a szülő által átadott függvényt a kiválasztott oszlop és sor indexével
+          onAddColumn(column, rowIndex, columnIndex);
+        }
+      }
+    } 
+      
   };
 
   const handleInputChange = (rowIndex: number, value: string) => {
@@ -57,32 +71,23 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   };
 
   const handleExportJSON = () => {
-    const tableData =  {
+    const tableData = {
       encode: {
-      headers: headers.map((row) =>
-        row.reduce((acc, header, idx) => {
-          acc[`key${idx + 1}`] = header;
-          return acc;
-        }, {})
-      ),
-      pairs: data.map((row, rowIndex) => {
-        // Minden sor egy objektum, amely az oszlopok kulcsait és a hozzájuk tartozó adatokat tartalmazza
-        const result: any = {};
-  
-        // Az oszlopok kulcsainak dinamikus generálása (key1, key2, key3, ...)
-        row.forEach((cell, colIndex) => {
-          const columnKey = `key${colIndex + 1}`; // key1, key2, key3, ...
-          result[columnKey] = cell; // A kulcs az oszlop indexe alapján
-        });
-  
-        // Az input mező értéke vagy az alap adat
-        result.value = inputValues[`${rowIndex}`] || row[row.length - 1]; // Az utolsó cella adatát a value mezőbe
-  
-        return result;
-      }),
-    }};
+        headers: headers.map((row) => ({
+          keys: row
+        })),
+        pairs: data.map((row, rowIndex) => {
+          const result: any = {
+            keyvalues: row,
+            value: inputValues[`${rowIndex}`] || row[row.length - 1]
+          };
+          return result;
+        }),
+      }
+    };
     onExportJSON(tableData);
   };
+
 
   return (
     <TableContainer component={Paper}>
@@ -102,7 +107,7 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
                 {headers.length === 1 ? (
                   <>
                     <Button
-                      onClick={() => toggleDropdown(rowIndex)}
+                      onClick={() => handleColumnSelection("waiting", rowIndex + 1, headers[0].length)}
                       variant="text"
                       color="primary"
                       key={`start-btn-${rowIndex}`}
@@ -130,7 +135,7 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
                 ) : rowIndex === headers.length - 1 ? (
                   <>
                   <Button
-                      onClick={() => toggleDropdown(rowIndex)}
+                      onClick={() => handleColumnSelection("waiting", rowIndex + 1, headers[0].length)}
                       variant="text"
                       color="primary"
                       key={`start-btn-${rowIndex}`}
@@ -158,38 +163,59 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
                 ) : null}
               </TableCell>
 
-              {headerRow.map((col, colIndex) => (
-                <TableCell key={`${rowIndex}-${colIndex}`}>{col}</TableCell>
-              ))}
-
-              {/* '+' gomb az oszlopok bővítéséhez */}
-              <TableCell>
-                <Button
-                  onClick={() => toggleDropdown(rowIndex)}
-                  variant="text"
-                  color="primary"
-                  key={`end-btn-${rowIndex}`}
-                >
-                  +
-                </Button>
-                {dropdownVisible[rowIndex] && (
+                {headerRow.map((col, colIndex) => (
+                <TableCell key={`${rowIndex}-${colIndex}`}>
+                  {col === "waiting" ? (
                   <Select
                     value=""
-                    onChange={(e) => handleColumnSelection(e.target.value as string, rowIndex)}
+                    onChange={(e) => handleColumnSelection(e.target.value as string, rowIndex, 1,colIndex)}
                     displayEmpty
                     style={{ marginLeft: "10px" }}
                   >
                     <MenuItem value="" disabled>
-                      Select column
+                    Select column
                     </MenuItem>
                     {columnNames.map((name) => (
-                      <MenuItem key={name} value={name}>
-                        {name}
-                      </MenuItem>
+                    <MenuItem key={name} value={name}>
+                      {name}
+                    </MenuItem>
                     ))}
                   </Select>
+                  ) : (
+                  col
+                  )}
+                </TableCell>
+                ))}
+              {/* '+' gomb az oszlopok bővítéséhez */}
+                {rowIndex === 0 && (
+                <TableCell>
+                  <Button
+                  onClick={() => handleColumnSelection("waiting", 0, headers.length, NaN, true)}
+                  variant="text"
+                  color="primary"
+                  key={`end-btn-${rowIndex}`}
+                  >
+                  +
+                  </Button>
+                  {dropdownVisible[rowIndex] && (
+                  <Select
+                    value=""
+                    onChange={(e) => handleColumnSelection("waiting", 0, headers.length, NaN, true)}
+                    displayEmpty
+                    style={{ marginLeft: "10px" }}
+                  >
+                    <MenuItem value="" disabled>
+                    Select column
+                    </MenuItem>
+                    {columnNames.map((name) => (
+                    <MenuItem key={name} value={name}>
+                      {name}
+                    </MenuItem>
+                    ))}
+                  </Select>
+                  )}
+                </TableCell>
                 )}
-              </TableCell>
             </TableRow>
           ))}
         </TableHead>
