@@ -22,7 +22,7 @@ const ChartPage: React.FC = () => {
           const result = Papa.parse(reader.result as string, { header: true });
           const keys = Object.keys(result.data[0] || {});
           setColumns(keys);
-          setCsvData(result.data); // Tároljuk a beolvasott adatokat
+          setCsvData(result.data);
         };
         reader.readAsText(file);
       } else if (file.name.endsWith('.xlsx')) {
@@ -33,7 +33,7 @@ const ChartPage: React.FC = () => {
           const data = XLSX.utils.sheet_to_json(sheet, { defval: '' });
           const keys = Object.keys(data[0] || {});
           setColumns(keys);
-          setCsvData(data); // Tároljuk az adatokat
+          setCsvData(data); 
         };
         reader.readAsBinaryString(file);
       }
@@ -42,18 +42,22 @@ const ChartPage: React.FC = () => {
 
   const handleGenerateChart = () => {
     if (selectedColumn) {
-      // Számoljuk meg az egyedi értékek előfordulásait
-      const counts: { [key: string]: number } = {};
-      csvData.forEach((row: any) => {
+      const counts = {};
+      csvData.forEach((row) => {
         const value = row[selectedColumn];
         if (value) {
           counts[value] = (counts[value] || 0) + 1;
         }
       });
 
-      // Grafikon adatok létrehozása
-      const labels = Object.keys(counts);
-      const data = Object.values(counts);
+      const sortedEntries = Object.entries(counts).sort((a, b) => {
+        const aKey = isNaN(Number(a[0])) ? a[0] : Number(a[0]);
+        const bKey = isNaN(Number(b[0])) ? b[0] : Number(b[0]);
+        return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
+      });
+
+      const labels = sortedEntries.map((entry) => entry[0]);
+      const data = sortedEntries.map((entry) => entry[1]);
 
       setChartData({
         labels,
@@ -119,7 +123,7 @@ const ChartPage: React.FC = () => {
             options={{
               responsive: true,
               maintainAspectRatio: false,
-              indexAxis: 'y',  // Vízszintes diagram (értékek az Y tengelyen, kategóriák az X tengelyen)
+              indexAxis: 'y',
               plugins: {
                 legend: { position: 'top' },
               },
@@ -133,7 +137,7 @@ const ChartPage: React.FC = () => {
                 y: {
                   title: {
                     display: true,
-                    text: selectedColumn || '', // Ha null, akkor üres string
+                    text: selectedColumn || '',
                   },
                 },
               },
