@@ -11,9 +11,6 @@ const Navbar: React.FC = () => {
       <NavLink to="/templates-list" className={({ isActive }) => (isActive ? 'active' : '')}>
         Template List
       </NavLink>
-      <NavLink to="/chart" className={({ isActive }) => (isActive ? 'active' : '')}>
-        Chart
-      </NavLink>
       <NavLink to="/statistics" className={({ isActive }) => (isActive ? 'active' : '')}>
         Statistics
       </NavLink>
