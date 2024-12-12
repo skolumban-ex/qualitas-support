@@ -11,7 +11,14 @@ const ChartPage: React.FC = () => {
   const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any>(null);
   const [csvData, setCsvData] = useState<any[]>([]);
-
+  const [jsonData, setJsonData] = useState<any>(null);
+  const [jsonCategory, setJsonCategory] = useState<string | null>(null);
+  const formatCategoryName = (category: string): string => {
+    return category
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/_/g, ' ')
+      .replace(/^./, (str) => str.toUpperCase());
+  };
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -35,14 +42,36 @@ const ChartPage: React.FC = () => {
           setColumns(keys);
           setCsvData(data); 
         };
-        reader.readAsBinaryString(file);
+        reader.readAsArrayBuffer(file);
+      } else if (file.name.endsWith('.json')) {
+        reader.onload = () => {
+          const data = JSON.parse(reader.result as string);
+          setJsonData(data);
+          
+          // Filter categories: ignore "type" and "totalRows" and include only categories with more than one float value
+          const filteredCategories = Object.keys(data).filter(category => {
+            if (category === 'type' || category === 'totalRows') {
+              return false;
+            }
+            const categoryData = data[category];
+            const floatValues = Object.values(categoryData).filter(value => typeof value === 'number' && !isNaN(value));
+            return floatValues.length > 1;  // Only keep categories with more than one float number
+          });
+          setJsonCategory(filteredCategories[0] || null);  // Default to the first valid category if available
+        };
+        reader.readAsText(file);
       }
     }
   };
 
   const handleGenerateChart = () => {
-    if (selectedColumn) {
-      const counts = {};
+    let dataToUse = {};
+    let labels: string[] = [];
+    let data: number[] = [];
+
+    if (csvData.length > 0 && selectedColumn) {
+      // Processing CSV data
+      const counts: { [key: string]: number } = {};
       csvData.forEach((row) => {
         const value = row[selectedColumn];
         if (value) {
@@ -56,22 +85,28 @@ const ChartPage: React.FC = () => {
         return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
       });
 
-      const labels = sortedEntries.map((entry) => entry[0]);
-      const data = sortedEntries.map((entry) => entry[1]);
+      labels = sortedEntries.map((entry) => entry[0]);
+      data = sortedEntries.map((entry) => entry[1]);
+    } else if (jsonData && jsonCategory) {
+      // Processing JSON data based on selected category
+      const categoryData = jsonData[jsonCategory] || {};
 
-      setChartData({
-        labels,
-        datasets: [
-          {
-            label: `Occurrences of ${selectedColumn}`,
-            data,
-            backgroundColor: 'rgba(75, 192, 192, 0.5)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1,
-          },
-        ],
-      });
+      labels = Object.keys(categoryData);
+      data = Object.values(categoryData);
     }
+
+    setChartData({
+      labels,
+      datasets: [
+        {
+          label: `Data from ${jsonCategory || 'CSV'}`,
+          data,
+          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+        },
+      ],
+    });
   };
 
   const handleDownloadChart = () => {
@@ -84,8 +119,31 @@ const ChartPage: React.FC = () => {
   return (
     <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       <h1>Chart Generator</h1>
-      <input type="file" accept=".csv, .xlsx" onChange={handleFileUpload} />
-      {columns.length > 0 && (
+      <input type="file" accept=".csv, .xlsx, .json" onChange={handleFileUpload} />
+      {jsonData && (
+        <div>
+          <h2>Select Category</h2>
+          <select
+            onChange={(e) => setJsonCategory(e.target.value)}
+            value={jsonCategory || ''}
+            style={{ padding: '10px', margin: '10px' }}
+          >
+            {Object.keys(jsonData).filter(category => {
+              if (category === 'type' || category === 'totalRows') {
+                return false;
+              }
+              const categoryData = jsonData[category];
+              const floatValues = Object.values(categoryData).filter(value => typeof value === 'number' && !isNaN(value));
+              return floatValues.length > 1;  // Only show categories with more than one float value
+            }).map((category) => (
+              <option key={category} value={category}>
+                {formatCategoryName(category)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {columns.length > 0 && !jsonData && (
         <div>
           <h2>Select Column</h2>
           <select
@@ -106,7 +164,7 @@ const ChartPage: React.FC = () => {
       )}
       <button
         onClick={handleGenerateChart}
-        disabled={!selectedColumn}
+        disabled={!selectedColumn && !jsonCategory}
         style={{
           padding: '10px 20px',
           margin: '10px',
@@ -131,13 +189,13 @@ const ChartPage: React.FC = () => {
                 x: {
                   title: {
                     display: true,
-                    text: 'Occurrences',
+                    text: 'Percentage',
                   },
                 },
                 y: {
                   title: {
                     display: true,
-                    text: selectedColumn || '',
+                    text: selectedColumn || jsonCategory || '',
                   },
                 },
               },
