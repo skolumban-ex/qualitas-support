@@ -4,7 +4,7 @@ import FileUploader from './components/FileUploader';
 import TemplateList from './components/TemplateList';
 import ChartPage from './components/ChartPage';
 import Navbar from './components/Navbar';
-import StatisticsPage from './components/StatisticsAndChart';
+import StatisticsPage from './components/StatisticsPage';
 
 const App: React.FC = () => {
   return (
