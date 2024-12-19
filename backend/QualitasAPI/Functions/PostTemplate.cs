@@ -35,10 +35,17 @@ namespace QualitasAPI.Functions
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var template = JsonConvert.DeserializeObject<Template>(requestBody);
 
-                if (template == null || string.IsNullOrEmpty(template.Id))
+                if (template == null)
                 {
-                    log.LogWarning("Template ID is missing or invalid.");
-                    return new BadRequestObjectResult("Template ID is required.");
+                    log.LogWarning("Template data is missing or invalid.");
+                    return new BadRequestObjectResult("Template data is required.");
+                }
+
+                // Generate a new ID if not provided
+                if (string.IsNullOrEmpty(template.Id))
+                {
+                    template.Id = Guid.NewGuid().ToString();
+                    log.LogInformation($"Generated new Template ID: {template.Id}");
                 }
 
                 var existingTemplate = await _templateCollection

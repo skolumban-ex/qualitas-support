@@ -19,33 +19,36 @@ namespace QualitasAPI.Functions
     public static class ProcessColumns
     {
         [FunctionName("ProcessColumns")]
-        //[OpenApiParameter(name: "remove...", In = ParameterLocation.Query, Required = false, Type = typeof(bool), Description = "If we should remove columns that are re encoded, set to true.")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "process-columns")] HttpRequest req,
             ILogger log)
         {
             log.LogInformation("Processing process-columns request.");
-            //bool removeReEncodedColumns = bool.Parse(req.Query["remove-reEncoded-Columns"]);
 
             try
             {
-                string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "teszt.xlsx");
 
-                if (!File.Exists(filePath))
+                var formCollection = await req.ReadFormAsync();
+                var file = formCollection.Files.FirstOrDefault();
+
+                if (file == null || file.Length == 0)
                 {
-                    log.LogError($"The file at {filePath} does not exist.");
-                    return new NotFoundObjectResult($"The file at {filePath} was not found.");
+                    log.LogError("No file uploaded or file is empty.");
+                    return new BadRequestObjectResult("No file uploaded or file is empty.");
                 }
 
-                using var workbook = new XLWorkbook(filePath);
-                var worksheet = workbook.Worksheets.First();
+                //itt olvasom ki a json-t a form-databól
+                string jsonMergeGroups = formCollection["mergeGroups"];
+                if (string.IsNullOrEmpty(jsonMergeGroups))
+                {
+                    log.LogError("MergeGroups JSON is missing.");
+                    return new BadRequestObjectResult("MergeGroups JSON is required.");
+                }
 
-                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 ProcessRequest request;
-
                 try
                 {
-                    request = JsonConvert.DeserializeObject<ProcessRequest>(requestBody);
+                    request = JsonConvert.DeserializeObject<ProcessRequest>(jsonMergeGroups);
                 }
                 catch (JsonException ex)
                 {
@@ -58,6 +61,13 @@ namespace QualitasAPI.Functions
                     log.LogWarning("Invalid request payload.");
                     return new BadRequestObjectResult("MergeGroups must be provided.");
                 }
+
+                using var memoryStream = new MemoryStream();
+                await file.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                using var workbook = new XLWorkbook(memoryStream);
+                var worksheet = workbook.Worksheets.First();
 
                 foreach (var mergeGroup in request.MergeGroups)
                 {
@@ -107,11 +117,11 @@ namespace QualitasAPI.Functions
                     }
                 }
 
-                var memoryStream = new MemoryStream();
-                workbook.SaveAs(memoryStream);
-                memoryStream.Position = 0;
+                var outputStream = new MemoryStream();
+                workbook.SaveAs(outputStream);
+                outputStream.Position = 0;
 
-                return new FileContentResult(memoryStream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                return new FileContentResult(outputStream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 {
                     FileDownloadName = "processed_file.xlsx"
                 };
