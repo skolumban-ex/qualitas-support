@@ -27,7 +27,7 @@ namespace QualitasAPI.Functions
 
             try
             {
-
+                // Read the uploaded file and form-data
                 var formCollection = await req.ReadFormAsync();
                 var file = formCollection.Files.FirstOrDefault();
 
@@ -37,7 +37,7 @@ namespace QualitasAPI.Functions
                     return new BadRequestObjectResult("No file uploaded or file is empty.");
                 }
 
-                //itt olvasom ki a json-t a form-databól
+                // Read JSON from form-data
                 string jsonMergeGroups = formCollection["mergeGroups"];
                 if (string.IsNullOrEmpty(jsonMergeGroups))
                 {
@@ -62,6 +62,14 @@ namespace QualitasAPI.Functions
                     return new BadRequestObjectResult("MergeGroups must be provided.");
                 }
 
+                // Check for deleteReEncodedColumn parameter
+                bool deleteReEncodedColumn = false;
+                if (bool.TryParse(req.Query["deleteReEncodedColumn"], out var parsedValue))
+                {
+                    deleteReEncodedColumn = parsedValue;
+                }
+
+                // Process the uploaded file
                 using var memoryStream = new MemoryStream();
                 await file.CopyToAsync(memoryStream);
                 memoryStream.Position = 0;
@@ -109,10 +117,13 @@ namespace QualitasAPI.Functions
                             worksheet.Cell(row, targetColumn).Value = mergedValue ?? "";
                         }
 
-                        foreach (var colName in columnGroup)
+                        if (deleteReEncodedColumn)
                         {
-                            int colIndex = GetColumnIndexByName(worksheet, colName);
-                            worksheet.Column(colIndex).Delete();
+                            foreach (var colName in columnGroup)
+                            {
+                                int colIndex = GetColumnIndexByName(worksheet, colName);
+                                worksheet.Column(colIndex).Delete();
+                            }
                         }
                     }
                 }

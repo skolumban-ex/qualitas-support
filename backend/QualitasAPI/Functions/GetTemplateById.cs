@@ -11,17 +11,17 @@ using MongoDB.Driver;
 
 namespace QualitasAPI.Functions
 {
-    public class GetDocumentById
+    public class GetTemplateById
     {
         private readonly IMongoCollection<BsonDocument> _templateCollection;
 
-        public GetDocumentById(IMongoClient mongoClient)
+        public GetTemplateById(IMongoClient mongoClient)
         {
             var database = mongoClient.GetDatabase("qualitas-Surveys");
             _templateCollection = database.GetCollection<BsonDocument>("templates");
         }
 
-        [FunctionName("GetDocumentById")]
+        [FunctionName("GetTemplateById")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "conversion-templates/{templateID}")] HttpRequest req,
             string templateID,
