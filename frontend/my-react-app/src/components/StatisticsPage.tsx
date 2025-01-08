@@ -1,23 +1,19 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import './StatisticsPage.css';
-
 interface DataRow {
   status: string;
   percentage: string;
 }
-
 interface Filter {
   column: string;
   value: string;
   logic: string;
 }
-
 interface FilterGroup {
   filters: Filter[];
   logic: string;
 }
-
 const StatisticsPage: React.FC = () => {
   const [data, setData] = useState<DataRow[]>([
     { status: 'Angajați', percentage: '' },
@@ -26,13 +22,13 @@ const StatisticsPage: React.FC = () => {
     { status: 'Continuă studiile și nu au loc de muncă', percentage: '' },
     { status: 'Nu sunt inserați pe piața muncii și nu urmează programe de studiu', percentage: '' },
   ]);
-
   const [rawData, setRawData] = useState<any[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [totalRows, setTotalRows] = useState<number>(0);
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
   const [filterGroups, setFilterGroups] = useState<FilterGroup[]>([]);
-
+  const [editStatusIndex, setEditStatusIndex] = useState<number | null>(null);
+  const [newStatus, setNewStatus] = useState<string>('');
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -49,21 +45,16 @@ const StatisticsPage: React.FC = () => {
       reader.readAsBinaryString(file);
     }
   };
-
   const calculatePercentage = () => {
     let filteredRows = rawData;
-
     filterGroups.forEach((group, groupIndex) => {
       let groupFilteredRows = rawData;
-
       group.filters.forEach((filter, filterIndex) => {
         const { column, value, logic } = filter;
-
         const currentFilteredRows = groupFilteredRows.filter((row) => {
           const cellValue = row[column];
           return typeof cellValue === 'number' ? cellValue === Number(value) : cellValue === value;
         });
-
         if (filterIndex === 0) {
           groupFilteredRows = currentFilteredRows;
         } else {
@@ -74,7 +65,6 @@ const StatisticsPage: React.FC = () => {
           }
         }
       });
-
       if (groupIndex === 0) {
         filteredRows = groupFilteredRows;
       } else {
@@ -86,16 +76,26 @@ const StatisticsPage: React.FC = () => {
         }
       }
     });
-
     return ((filteredRows.length / totalRows) * 100).toFixed(2);
   };
-
+  const handleStatusChange = (index: number, newStatus: string) => {
+    const updatedData = [...data];
+    updatedData[index].status = newStatus;
+    setData(updatedData);
+    setEditStatusIndex(null);
+  };
+  const handleStatusInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewStatus(e.target.value);
+  };
+  const confirmStatusChange = (index: number) => {
+    handleStatusChange(index, newStatus);
+    setNewStatus('');
+  };
   const handleCellClick = (index: number) => {
     if (rawData.length === 0 || columns.length === 0) {
       alert('Please upload a file first to enable percentage calculation.');
       return;
     }
-
     if (selectedCell === index) {
       setSelectedCell(null);
     } else {
@@ -103,14 +103,12 @@ const StatisticsPage: React.FC = () => {
       setFilterGroups([]);
     }
   };
-
   const addFilterGroup = () => {
     setFilterGroups((prev) => [
       ...prev,
       { filters: [{ column: columns[0] || '', value: '', logic: 'AND' }], logic: 'AND' },
     ]);
   };
-
   const handleFilterChange = (
     groupIndex: number,
     filterIndex: number,
@@ -124,30 +122,24 @@ const StatisticsPage: React.FC = () => {
     };
     setFilterGroups(updatedGroups);
   };
-
   const handleGroupLogicChange = (groupIndex: number, value: string) => {
     const updatedGroups = [...filterGroups];
     updatedGroups[groupIndex].logic = value;
     setFilterGroups(updatedGroups);
   };
-
   const removeFilterFromGroup = (groupIndex: number, filterIndex: number) => {
     const updatedGroups = [...filterGroups];
     updatedGroups[groupIndex].filters = updatedGroups[groupIndex].filters.filter(
       (_, i) => i !== filterIndex
     );
-    
     if (updatedGroups[groupIndex].filters.length === 0) {
       updatedGroups.splice(groupIndex, 1);
     }
-    
     setFilterGroups(updatedGroups);
   };
-
   const removeFilterGroup = (groupIndex: number) => {
     setFilterGroups((prev) => prev.filter((_, i) => i !== groupIndex));
   };
-
   const getFilterDisplay = () => {
     return filterGroups
       .map((group, groupIndex) => {
@@ -157,7 +149,6 @@ const StatisticsPage: React.FC = () => {
             return `${filter.logic} ${filter.column} ${filter.value}`;
           })
           .join(' ');
-        
         if (groupIndex < filterGroups.length - 1) {
           return `(${groupFilters}) ${group.logic}`;
         }
@@ -165,10 +156,8 @@ const StatisticsPage: React.FC = () => {
       })
       .join(' ');
   };
-
   const confirmCalculation = () => {
     if (selectedCell === null) return;
-
     const calculatedPercentage = calculatePercentage();
     setData((prev) =>
       prev.map((row, i) =>
@@ -177,7 +166,6 @@ const StatisticsPage: React.FC = () => {
     );
     setSelectedCell(null);
   };
-
   const addFilterToGroup = (groupIndex: number) => {
     const updatedGroups = [...filterGroups];
     updatedGroups[groupIndex].filters.push({
@@ -187,11 +175,22 @@ const StatisticsPage: React.FC = () => {
     });
     setFilterGroups(updatedGroups);
   };
-
+  const exportToJSON = () => {
+    const jsonData = data.reduce((acc, row) => {
+      const key = row.status;
+      const value = parseFloat(row.percentage) || 0;
+      acc[key] = value;
+      return acc;
+    }, {} as { [key: string]: number });
+    const blob = new Blob([JSON.stringify({ table: jsonData }, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'statistics_table.json';
+    link.click();
+  };
   return (
     <div className="statistics-page">
       <h1>Statistics Page</h1>
-
       <div className="upload-section">
         <input
           type="file"
@@ -205,7 +204,6 @@ const StatisticsPage: React.FC = () => {
           </p>
         )}
       </div>
-
       {rawData.length > 0 && (
         <div className="table-container">
           <table className="statistics-table">
@@ -218,8 +216,39 @@ const StatisticsPage: React.FC = () => {
             <tbody>
               {data.map((row, index) => (
                 <tr key={index} className={selectedCell === index ? 'selected' : ''}>
-                  <td>{row.status}</td>
-                  <td 
+                  <td>
+                    {editStatusIndex === index ? (
+                      <>
+                        <input
+                          type="text"
+                          value={newStatus}
+                          onChange={handleStatusInputChange}
+                          autoFocus
+                          className="status-input"
+                        />
+                        <button
+                          onClick={() => confirmStatusChange(index)}
+                          className="save-button"
+                        >
+                          Save
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {row.status}
+                        <button
+                          onClick={() => {
+                            setEditStatusIndex(index);
+                            setNewStatus(row.status);
+                          }}
+                          className="edit-button"
+                        >
+                          ✏️
+                        </button>
+                      </>
+                    )}
+                  </td>
+                  <td
                     onClick={() => handleCellClick(index)}
                     className="clickable"
                   >
@@ -231,11 +260,9 @@ const StatisticsPage: React.FC = () => {
           </table>
         </div>
       )}
-
       {selectedCell !== null && (
         <div className="calculation-section">
           <h2>Calculate Percentage for: {data[selectedCell].status}</h2>
-
           <div className="filters-container">
             {filterGroups.map((group, groupIndex) => (
               <div key={groupIndex} className="filter-group">
@@ -248,7 +275,6 @@ const StatisticsPage: React.FC = () => {
                     Remove Group
                   </button>
                 </div>
-
                 {group.filters.map((filter, filterIndex) => (
                   <div key={filterIndex} className="filter-row">
                     {filterIndex > 0 && (
@@ -295,7 +321,6 @@ const StatisticsPage: React.FC = () => {
                     )}
                   </div>
                 ))}
-
                 <div className="group-footer">
                   <button
                     onClick={() => addFilterToGroup(groupIndex)}
@@ -319,26 +344,27 @@ const StatisticsPage: React.FC = () => {
                 </div>
               </div>
             ))}
-
             <button onClick={addFilterGroup} className="add-group-button">
               Add Filter Group
             </button>
           </div>
-
           {filterGroups.length > 0 && (
             <div className="filter-display">
               <strong>Current Filters:</strong>
               <p>{getFilterDisplay()}</p>
             </div>
           )}
-
           <button onClick={confirmCalculation} className="confirm-button">
             Calculate and Update
           </button>
         </div>
       )}
+      <div className="export-section">
+        <button onClick={exportToJSON} className="export-button">
+          Export to JSON
+        </button>
+      </div>
     </div>
   );
 };
-
 export default StatisticsPage;

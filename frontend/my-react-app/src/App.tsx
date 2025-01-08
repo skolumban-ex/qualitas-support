@@ -5,7 +5,7 @@ import TemplateList from './components/TemplateList';
 import ChartPage from './components/ChartPage';
 import Navbar from './components/Navbar';
 import StatisticsPage from './components/StatisticsPage';
-
+import StatisticsPageHC from './components/StatisticsPageHardcoded';
 const App: React.FC = () => {
   return (
     <Router>
@@ -26,6 +26,7 @@ const Main: React.FC = () => {
         <Route path="/templates-list" element={<TemplateList />} />
         <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/chart" element={<ChartPage/>}/>
+        <Route path="/statisticshc" element={<StatisticsPageHC/>}/>
       </Routes>
     </div>
   );
