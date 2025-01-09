@@ -78,6 +78,16 @@ const StatisticsPage: React.FC = () => {
     });
     return ((filteredRows.length / totalRows) * 100).toFixed(2);
   };
+
+  const deleteRow = (index: number) => {
+    setData((prev) => prev.filter((_, i) => i !== index));
+  };
+  
+  const addNewRow = () => {
+    setData((prev) => [...prev, { status: 'New Line', percentage: '' }]);
+  };
+  
+
   const handleStatusChange = (index: number, newStatus: string) => {
     const updatedData = [...data];
     updatedData[index].status = newStatus;
@@ -214,49 +224,61 @@ const StatisticsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {data.map((row, index) => (
-                <tr key={index} className={selectedCell === index ? 'selected' : ''}>
-                  <td>
-                    {editStatusIndex === index ? (
-                      <>
-                        <input
-                          type="text"
-                          value={newStatus}
-                          onChange={handleStatusInputChange}
-                          autoFocus
-                          className="status-input"
-                        />
-                        <button
-                          onClick={() => confirmStatusChange(index)}
-                          className="save-button"
-                        >
-                          Save
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {row.status}
-                        <button
-                          onClick={() => {
-                            setEditStatusIndex(index);
-                            setNewStatus(row.status);
-                          }}
-                          className="edit-button"
-                        >
-                          ✏️
-                        </button>
-                      </>
-                    )}
-                  </td>
-                  <td
-                    onClick={() => handleCellClick(index)}
-                    className="clickable"
-                  >
-                    {row.percentage || '-'}
+                {data.map((row, index) => (
+                  <tr key={index} className={selectedCell === index ? 'selected' : ''}>
+                    <td>
+                      {editStatusIndex === index ? (
+                        <>
+                          <input
+                            type="text"
+                            value={newStatus}
+                            onChange={handleStatusInputChange}
+                            autoFocus
+                            className="status-input"
+                          />
+                          <button
+                            onClick={() => confirmStatusChange(index)}
+                            className="save-button"
+                          >
+                            Save
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {row.status}
+                          <button
+                            onClick={() => {
+                              setEditStatusIndex(index);
+                              setNewStatus(row.status);
+                            }}
+                            className="edit-button"
+                          >
+                            ✏️
+                          </button>
+                        </>
+                      )}
+                    </td>
+                    <td onClick={() => handleCellClick(index)} className="clickable">
+                      {row.percentage || '-'}
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => deleteRow(index)}
+                        className="delete-button"
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                <tr>
+                  <td colSpan={3}>
+                    <button onClick={addNewRow} className="add-new-row-button">
+                      + Add New Line
+                    </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              </tbody>
           </table>
         </div>
       )}
