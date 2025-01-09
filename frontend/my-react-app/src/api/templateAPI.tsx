@@ -15,6 +15,7 @@ export const getAllTemplates = async (): Promise<Template[]> => {
 };
 
 export const saveTemplate = async (template: Template): Promise<Template> => {
+  console.log(template);
   const response = await api.post('/conversion-templates', template);
   return response.data;
 };

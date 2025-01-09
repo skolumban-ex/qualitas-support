@@ -18,6 +18,7 @@ interface DynamicMultiHeaderTableProps {
   headers: string[][]; // Táblázat fejlécsorai
   data: string[][]; // Táblázat adatai
   values: string[]; // Táblázat értékei
+  resultColumnNames: string; // Az eredmény oszlopnevei
   onExportJSON: (json: any) => void; // Callback a JSON exportálásához
   onSetValues: (values: string[]) => void; // Callback az értékek beállításához
 }
@@ -26,12 +27,14 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   headers,
   data,
   values,
+  resultColumnNames,
   onExportJSON,
   onSetValues
 }) => {
   const [dropdownVisible, setDropdownVisible] = useState<{[key: number]: boolean}>({});
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
   const [valuess, setValues] = useState([...values]);
+  const [resultColumnName, setResultColumnName] = useState<string>(resultColumnNames);
 
 
   
@@ -61,6 +64,7 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
           };
           return result;
         }),
+        resultColumnName: resultColumnName
       }
     };
     onExportJSON(tableData);
@@ -70,9 +74,25 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   return (
     <TableContainer component={Paper}>
       {/* Fixed text above the result column */}
-      <div style={{ textAlign: "right", padding: "8px", fontWeight: "bold", color: "white", background: "#9b2940" }}>
-        Result column names
-      </div>
+      <div
+              style={{
+                textAlign: "right",
+                padding: "8px",
+                fontWeight: "bold",
+                color: "white",
+                background: "#9b2940",
+              }}
+            >
+              Result column names
+              <TextField
+                variant="outlined"
+                size="small"
+                value={resultColumnName}
+                onChange={(e) => setResultColumnName(e.target.value)}
+                placeholder="Enter result column name"
+                style={{ marginLeft: "10px", background: "white" }}
+              />
+            </div>
 
       <Table>
         {/* Többszintű fejléc */}

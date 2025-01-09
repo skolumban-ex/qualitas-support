@@ -33,6 +33,7 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
 }) => {
   const [dropdownVisible, setDropdownVisible] = useState<{[key: number]: boolean}>({});
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
+  const [resultColumnName, setResultColumnName] = useState<string>("");
 
 
   const handleColumnSelection = (column: string, rowIndex: number, n: number=1, columnIndex : number=NaN, columnAdd: boolean=false) => {
@@ -74,16 +75,17 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
     const tableData = {
       encode: {
         headers: headers.map((row) => ({
-          keys: row
+          keys: row,
         })),
         pairs: data.map((row, rowIndex) => {
           const result: any = {
             keyvalues: row,
-            value: inputValues[`${rowIndex}`] || row[row.length - 1]
+            value: inputValues[`${rowIndex}`] || row[row.length - 1],
           };
           return result;
         }),
-      }
+        resultColumnName: resultColumnName || "", // Hozzáadjuk a resultColumnName-t
+      },
     };
     onExportJSON(tableData);
   };
@@ -92,8 +94,24 @@ const DynamicMultiHeaderTable: React.FC<DynamicMultiHeaderTableProps> = ({
   return (
     <TableContainer component={Paper}>
       {/* Fixed text above the result column */}
-      <div style={{ textAlign: "right", padding: "8px", fontWeight: "bold", color: "white", background: "#9b2940" }}>
+      <div
+        style={{
+          textAlign: "right",
+          padding: "8px",
+          fontWeight: "bold",
+          color: "white",
+          background: "#9b2940",
+        }}
+      >
         Result column names
+        <TextField
+          variant="outlined"
+          size="small"
+          value={resultColumnName}
+          onChange={(e) => setResultColumnName(e.target.value)}
+          placeholder="Enter result column name"
+          style={{ marginLeft: "10px", background: "white" }}
+        />
       </div>
 
       <Table>
