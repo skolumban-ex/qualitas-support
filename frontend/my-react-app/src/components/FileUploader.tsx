@@ -7,12 +7,43 @@ import './FileUploader.css';
 import DynamicMultiHeaderTable from './DynamicTable';
 import TemplateViewer from './TemplateViewer';
 import TableEdit from './TableEdit';
+import { saveTemplate } from '../api/templateAPI';
+import { Template } from '../models/templates';
+
 
 interface JSONOutput {
   ignore?: string[];
   encode?: Array<{ [key: string]: Array<{ original: string; encoded: string }> }>;
   merge?: Array<{ mergedColumns: string[]; mergedValues: Array<{ original: string; encoded: string }> }>;
 }
+
+function transformTemplate(frontendTemplate) {
+  return frontendTemplate.map((itemm) => {
+    const item = JSON.parse(itemm);
+    const headers = item.encode.headers?.map((header) => header.keys) || [];
+    const columns = transpose(headers);
+
+    const valueMappings = {};
+    item.encode.pairs.forEach((pair) => {
+      if (!valueMappings[pair.value]) {
+        valueMappings[pair.value] = [];
+      }
+      valueMappings[pair.value].push(...pair.keyvalues);
+    });
+
+    return {
+      columns,
+      valueMappings,
+      resultColumnName: [item.encode.resultColumnName],
+    };
+  });
+}
+
+function transpose(matrix) {
+  if (!matrix.length) return [];
+  return matrix[0].map((_, colIndex) => matrix.map((row) => row[colIndex] || ""));
+}
+
 
 const FileUploader: React.FC = () => {
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
@@ -27,6 +58,7 @@ const FileUploader: React.FC = () => {
   const [template, setTemplate] = useState<string[]>([]);
   const [values, setValues] = useState<string[]>([]);
   const [tableEditEnabled, setTableEditEnabled] = useState<boolean>(false);
+  const [resultColumnName, setResultColumnName] = useState<string>("");
 
   const handleAddColumn = (column: string, index: number, columnIndex: number) => {
     console.log(column)  
@@ -57,7 +89,8 @@ const FileUploader: React.FC = () => {
     });
 
     console.log(template);
-
+    const templateJson = template.map(item => JSON.parse(item));
+    console.log("Exportált JSON:", JSON.stringify(templateJson, null, 2));
     setTableEditEnabled(false);
 
     setSelectedMultipleColumns([]);
@@ -78,6 +111,9 @@ const FileUploader: React.FC = () => {
     const valueValues = template.encode.pairs.map((pair) => pair.value);
     setValues(valueValues);
     console.log(valueValues);
+    const restoredResultColumnName = template.encode.resultColumnName;
+    setResultColumnName(restoredResultColumnName);
+
     setTableEditEnabled(true);
 
   };
@@ -116,6 +152,19 @@ const FileUploader: React.FC = () => {
       console.error('Error uploading file:', error);
     }
   };
+
+  const handleCreateTemplate = async () => {
+    const backendTemplate = transformTemplate(template);
+    saveTemplate(backendTemplate).then(() => {
+  
+      setTemplate([]);
+      setTableEditEnabled(false);
+
+      setSelectedMultipleColumns([]);
+      setUniqueValues([]);
+      setSelectedColumns([]);
+    });
+  }
 
   const toggleColumnSelection = (columnName: string, index: number = 0, columnIndex: number=NaN) => {
     setSelectedMultipleColumns((prev) => {
@@ -261,18 +310,6 @@ const FileUploader: React.FC = () => {
     }));
   };
 
-  const handleCreateTemplate = async () => {
-    try {
-      const response = await axios.post('http://localhost:7191/api/conversion-templates', jsonOutput, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      console.log('Template created:', response.data);
-    } catch (error) {
-      console.error('Error creating template:', error);
-    }
-  };
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -339,10 +376,14 @@ const FileUploader: React.FC = () => {
         headers={selectedMultipleColumns}
         data={uniqueValues}
         values={values}
+        resultColumnNames={resultColumnName}
         onExportJSON={handleExportJSON}
         onSetValues={setValues}
       />
       )}
+      <button onClick={handleCreateTemplate} className="save-button">
+        Save Template
+      </button>
     </div>
   );
   

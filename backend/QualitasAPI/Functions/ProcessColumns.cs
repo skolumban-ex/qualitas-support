@@ -62,14 +62,12 @@ namespace QualitasAPI.Functions
                     return new BadRequestObjectResult("MergeGroups must be provided.");
                 }
 
-                // Check for deleteReEncodedColumn parameter
                 bool deleteReEncodedColumn = false;
                 if (bool.TryParse(req.Query["deleteReEncodedColumn"], out var parsedValue))
                 {
                     deleteReEncodedColumn = parsedValue;
                 }
 
-                // Process the uploaded file
                 using var memoryStream = new MemoryStream();
                 await file.CopyToAsync(memoryStream);
                 memoryStream.Position = 0;
