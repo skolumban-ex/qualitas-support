@@ -102,7 +102,7 @@ namespace QualitasAPI.Functions
 
                                 foreach (var mapping in mergeGroup.ValueMappings)
                                 {
-                                    if (mapping.Value.Contains(cellValue))
+                                    if (mapping.Value.Select(v => v.ToLower()).Contains(cellValue))
                                     {
                                         mergedValue = mapping.Key.ToString();
                                         break;

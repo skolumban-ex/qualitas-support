@@ -14,9 +14,9 @@ export const getAllTemplates = async (): Promise<Template[]> => {
   return transformTemplates(response.data);
 };
 
-export const saveTemplate = async (template: Template): Promise<Template> => {
-  console.log(template);
-  const response = await api.post('/conversion-templates', template);
+export const saveTemplate = async (template: any): Promise<any> => {
+  console.log(JSON.stringify(template));
+  const response = await api.post('/conversion-templates', JSON.stringify(template));
   return response.data;
 };
 
@@ -38,6 +38,7 @@ export const processColumns = async (
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    responseType: 'blob',
   });
   return response.data;
 };

@@ -17,25 +17,45 @@ interface JSONOutput {
   merge?: Array<{ mergedColumns: string[]; mergedValues: Array<{ original: string; encoded: string }> }>;
 }
 
-function transformTemplate(frontendTemplate) {
-  return frontendTemplate.map((itemm) => {
+function transformTemplate(frontendTemplate: string[]) {
+  const mergeGroups = frontendTemplate.map((itemm) => {
     const item = JSON.parse(itemm);
-    const headers = item.encode.headers?.map((header) => header.keys) || [];
-    const columns = transpose(headers);
 
-    const valueMappings = {};
+    // Oszlopok egyesítése (helyes tömbstruktúra biztosítása)
+    const columns = item.encode.headers?.map((header) => header.keys.flat()) || [];
+
+    // Értéktérképek létrehozása
+    const valueMappings: Record<string, string[]> = {};
     item.encode.pairs.forEach((pair) => {
-      if (!valueMappings[pair.value]) {
-        valueMappings[pair.value] = [];
+      if (pair.value !== "") {
+        if (!valueMappings[pair.value]) {
+          valueMappings[pair.value] = [];
+        }
+        valueMappings[pair.value].push(
+          ...pair.keyvalues.filter((keyvalue) => keyvalue !== "")
+        );
       }
-      valueMappings[pair.value].push(...pair.keyvalues);
     });
 
     return {
-      columns,
-      valueMappings,
-      resultColumnName: [item.encode.resultColumnName],
+      Columns: [columns.flat()], // Oszlopok egyesítése
+      ValueMappings: valueMappings,
+      ResultColumnName: [item.encode.resultColumnName],
     };
+  });
+
+  return {
+    mergeGroups,
+  };
+}
+
+
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
   });
 }
 
@@ -154,17 +174,32 @@ const FileUploader: React.FC = () => {
   };
 
   const handleCreateTemplate = async () => {
-    const backendTemplate = transformTemplate(template);
-    saveTemplate(backendTemplate).then(() => {
+    if (!template.length) {
+      console.error("No templates to save.");
+      return;
+    }
   
+    const backendTemplate = transformTemplate(template);
+  
+    // Debugging: Ellenőrizzük a generált JSON-t
+    console.log("Generated Template JSON:", JSON.stringify(backendTemplate, null, 2));
+  
+    try {
+      await saveTemplate(backendTemplate);
+      console.log("Template saved successfully.");
+  
+      // Reset UI állapot
       setTemplate([]);
       setTableEditEnabled(false);
-
       setSelectedMultipleColumns([]);
       setUniqueValues([]);
       setSelectedColumns([]);
-    });
-  }
+      setResultColumnName("");
+    } catch (error) {
+      console.error("Error saving template:", error);
+    }
+  };
+  
 
   const toggleColumnSelection = (columnName: string, index: number = 0, columnIndex: number=NaN) => {
     setSelectedMultipleColumns((prev) => {
